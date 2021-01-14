@@ -20,19 +20,28 @@ const Navbar = ({ activePage, user = undefined }: Props) => {
     user === undefined
       ? [
           { href: "/", title: "Home", page: "home" },
-          { href: "", title: "Sign in", page: "login" },
-          { href: "", title: "Sign up", page: "register" },
+          { href: "/login", title: "Sign in", page: "login" },
+          { href: "/register", title: "Sign up", page: "register" },
         ]
       : [
           { href: "/", title: "Home", page: "home" },
           {
-            href: "",
+            href: "/editor",
             title: "New Article",
             page: "editor",
             icon: "ion-compose",
           },
-          { href: "", title: "Settings", page: "settings", icon: "ion-gear-a" },
-          { href: "", title: user.username, page: "profile" },
+          {
+            href: "/settings",
+            title: "Settings",
+            page: "settings",
+            icon: "ion-gear-a",
+          },
+          {
+            href: `/profile/${user.username}`,
+            title: user.username,
+            page: "profile",
+          },
         ];
 
   return (

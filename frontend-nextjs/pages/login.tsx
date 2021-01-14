@@ -1,9 +1,33 @@
 import Footer from "components/footer";
 import Navbar from "components/navbar";
 import Link from "next/link";
+import { useState } from "react";
+
+type FormInfo = {
+  errors: string[];
+  email: string;
+  password: string;
+};
 
 const Login = () => {
-  const errors: string[] = ["Invalid password"];
+  const [formInfo, setFormInfo] = useState<FormInfo>({
+    errors: [],
+    email: "",
+    password: "",
+  });
+
+  const handleEmailChange = (event: React.FormEvent<HTMLInputElement>) => {
+    setFormInfo({ ...formInfo, email: event.currentTarget.value });
+  };
+
+  const handlePasswordChange = (event: React.FormEvent<HTMLInputElement>) => {
+    setFormInfo({ ...formInfo, password: event.currentTarget.value });
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLButtonElement>) => {
+    console.log(formInfo);
+    event.preventDefault();
+  };
 
   return (
     <>
@@ -20,7 +44,7 @@ const Login = () => {
               </p>
 
               <ul className="error-messages">
-                {errors.map((error) => (
+                {formInfo.errors.map((error) => (
                   <li>{error}</li>
                 ))}
               </ul>
@@ -31,6 +55,7 @@ const Login = () => {
                     className="form-control form-control-lg"
                     type="text"
                     placeholder="Email"
+                    onChange={handleEmailChange}
                   />
                 </fieldset>
 
@@ -39,10 +64,14 @@ const Login = () => {
                     className="form-control form-control-lg"
                     type="password"
                     placeholder="Password"
+                    onChange={handlePasswordChange}
                   />
                 </fieldset>
 
-                <button className="btn btn-lg btn-primary pull-xs-right">
+                <button
+                  className="btn btn-lg btn-primary pull-xs-right"
+                  onClick={handleSubmit}
+                >
                   Sign in
                 </button>
               </form>

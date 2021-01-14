@@ -1,14 +1,23 @@
 import Head from "next/head";
 import Link from "next/link";
+import Page from "types/Page";
 
-const Navbar = () => {
+type Props = {
+  activePage: Page;
+};
+
+type NavItem = {
+  href: string;
+  title: string;
+  page: Page;
+};
+
+const Navbar = ({ activePage }: Props) => {
   const items = [
-    { href: "/", title: "Home" },
-    { href: "", title: "Sign in" },
-    { href: "", title: "Sign up" },
+    { href: "/", title: "Home", page: "home" },
+    { href: "", title: "Sign in", page: "login" },
+    { href: "", title: "Sign up", page: "register" },
   ];
-  const activeItem = 0;
-
   return (
     <>
       <Head>
@@ -34,11 +43,13 @@ const Navbar = () => {
           </Link>
 
           <ul className="nav navbar-nav pull-xs-right">
-            {items.map(({ href, title }, idx) => (
+            {items.map(({ href, title, page }) => (
               <li className="nav-item">
                 <Link href={href}>
                   <a
-                    className={`nav-link ${idx === activeItem ? "active" : ""}`}
+                    className={`nav-link ${
+                      activePage === page ? "active" : ""
+                    }`}
                   >
                     {title}
                   </a>

@@ -44,7 +44,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Navbar />
+      <Navbar activePage="home" />
 
       <div className="home-page">
         <div className="banner">

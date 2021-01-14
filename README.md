@@ -14,6 +14,10 @@ can work with any backend implementation.
 
 ## Languages and Frameworks I want to implement
 
+Each implementation has its own branch and directory. Frontend implementations
+are tagged as `frontend-[LANGUAGE/FRAMEWORK]`, and backend implementations are
+tagged as `backend-[LANGUAGE/FRAMEWORK]`.
+
 ### Frontend
 
 - [ ] [Next.js](https://nextjs.org/) (with [TypeScript](https://www.typescriptlang.org/))

@@ -70,7 +70,7 @@ const Navbar = ({ activePage, user = undefined }: Props) => {
 
           <ul className="nav navbar-nav pull-xs-right">
             {items.map((item) => (
-              <li className="nav-item">
+              <li className="nav-item" key={item.href}>
                 <Link href={item.href}>
                   <a
                     className={`nav-link ${

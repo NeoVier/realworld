@@ -13,7 +13,7 @@ export const users: User[] = [
 
 export const profiles: Profile[] = [
   {
-    username: "Henrique Buss",
+    username: "neovier",
     bio: "Functional programmer",
     image: "http://i.imgur.com/N4VcUeJ.jpg",
     following: false,

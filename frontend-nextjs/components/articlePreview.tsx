@@ -7,16 +7,14 @@ const ArticlePreview = ({ article }: Props) => {
   return (
     <div className="article-preview">
       <div className="article-meta">
-        <Link href="">
-          {/* TODO */}
+        <Link href={`/profile/${article.author.username}`}>
           <a>
             <img src={article.author.image ?? ""} />
           </a>
         </Link>
 
         <div className="info">
-          <Link href="">
-            {/* TODO */}
+          <Link href={`/profile/${article.author.username}`}>
             <a className="author">{article.author.username}</a>
           </Link>
           <span className="date">January 20th</span> {/* TODO */}
@@ -27,8 +25,7 @@ const ArticlePreview = ({ article }: Props) => {
         </button>
       </div>
 
-      <Link href="">
-        {/* TODO */}
+      <Link href={`/article/${article.slug}`}>
         <a className="preview-link">
           <h1>{article.title}</h1>
           <p>{article.description}</p>

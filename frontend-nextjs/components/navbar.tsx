@@ -1,23 +1,40 @@
 import Head from "next/head";
 import Link from "next/link";
 import Page from "types/Page";
+import User from "types/User";
 
 type Props = {
   activePage: Page;
+  user?: User;
 };
 
 type NavItem = {
   href: string;
   title: string;
   page: Page;
+  icon?: string;
 };
 
-const Navbar = ({ activePage }: Props) => {
-  const items = [
-    { href: "/", title: "Home", page: "home" },
-    { href: "", title: "Sign in", page: "login" },
-    { href: "", title: "Sign up", page: "register" },
-  ];
+const Navbar = ({ activePage, user = undefined }: Props) => {
+  const items: NavItem[] =
+    user === undefined
+      ? [
+          { href: "/", title: "Home", page: "home" },
+          { href: "", title: "Sign in", page: "login" },
+          { href: "", title: "Sign up", page: "register" },
+        ]
+      : [
+          { href: "/", title: "Home", page: "home" },
+          {
+            href: "",
+            title: "New Article",
+            page: "editor",
+            icon: "ion-compose",
+          },
+          { href: "", title: "Settings", page: "settings", icon: "ion-gear-a" },
+          { href: "", title: user.username, page: "profile" },
+        ];
+
   return (
     <>
       <Head>
@@ -43,15 +60,16 @@ const Navbar = ({ activePage }: Props) => {
           </Link>
 
           <ul className="nav navbar-nav pull-xs-right">
-            {items.map(({ href, title, page }) => (
+            {items.map((item) => (
               <li className="nav-item">
-                <Link href={href}>
+                <Link href={item.href}>
                   <a
                     className={`nav-link ${
-                      activePage === page ? "active" : ""
+                      activePage === item.page ? "active" : ""
                     }`}
                   >
-                    {title}
+                    {item.icon && <i className={item.icon} />}
+                    {item.title}
                   </a>
                 </Link>
               </li>

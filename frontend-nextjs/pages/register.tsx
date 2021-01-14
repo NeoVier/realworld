@@ -1,21 +1,22 @@
 import Footer from "components/footer";
-import Navbar from "components/navbar";
 import Link from "next/link";
+import Navbar from "../components/navbar";
 
-const Login = () => {
-  const errors: string[] = ["Invalid password"];
+const Register = () => {
+  const errors: string[] = ["That email is already taken"];
 
   return (
     <>
-      <Navbar activePage="login" />
+      <Navbar activePage="register" />
+
       <div className="auth-page">
         <div className="container page">
           <div className="row">
             <div className="col-md-6 offset-md-3 col-xs-12">
-              <h1 className="text-xs-center">Sign in</h1>
+              <h1 className="text-xs-center">Sign up</h1>
               <p className="text-xs-center">
-                <Link href="/register">
-                  <a>Need an account?</a>
+                <Link href="/login">
+                  <a>Have an account?</a>
                 </Link>
               </p>
 
@@ -28,31 +29,40 @@ const Login = () => {
               <form>
                 <fieldset className="form-group">
                   <input
-                    className="form-control form-control-lg"
                     type="text"
+                    className="form-control form-control-lg"
+                    placeholder="Your Name"
+                  />
+                </fieldset>
+
+                <fieldset className="form-group">
+                  <input
+                    type="text"
+                    className="form-control form-control-lg"
                     placeholder="Email"
                   />
                 </fieldset>
 
                 <fieldset className="form-group">
                   <input
-                    className="form-control form-control-lg"
                     type="password"
+                    className="form-control form-control-lg"
                     placeholder="Password"
                   />
                 </fieldset>
 
                 <button className="btn btn-lg btn-primary pull-xs-right">
-                  Sign in
+                  Sign up
                 </button>
               </form>
             </div>
           </div>
         </div>
       </div>
+
       <Footer />
     </>
   );
 };
 
-export default Login;
+export default Register;

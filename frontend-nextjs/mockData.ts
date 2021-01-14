@@ -2,14 +2,26 @@ import Article from "types/Article";
 import Profile from "types/Profile";
 import User from "types/User";
 
+export const defaultProfileImg =
+  "https://static.productionready.io/images/smiley-cyrus.jpg";
+
 export const users: User[] = [
   {
     email: "henrique.buss@hotmail.com",
     token: "",
     username: "neovier",
     bio: "Functional programmer",
+    image: defaultProfileImg,
   },
 ];
+
+export const currentUser: User = {
+  email: "henrique.buss@hotmail.com",
+  token: "",
+  username: "neovier",
+  bio: "Functional programmer",
+  image: defaultProfileImg,
+};
 
 export const profiles: Profile[] = [
   {
@@ -34,8 +46,6 @@ export const articles: Article[] = [
     author: profiles[0],
   },
 ];
-export const defaultProfileImg =
-  "https://static.productionready.io/images/smiley-cyrus.jpg";
 
 export const popularTags: string[] = [
   "programming",

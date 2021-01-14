@@ -1,29 +1,13 @@
 import Link from "next/link";
 import Article from "types/Article";
+import ArticleMeta from "./articleMeta";
 
 type Props = { article: Article };
 
 const ArticlePreview = ({ article }: Props) => {
   return (
     <div className="article-preview">
-      <div className="article-meta">
-        <Link href={`/profile/${article.author.username}`}>
-          <a>
-            <img src={article.author.image ?? ""} />
-          </a>
-        </Link>
-
-        <div className="info">
-          <Link href={`/profile/${article.author.username}`}>
-            <a className="author">{article.author.username}</a>
-          </Link>
-          <span className="date">January 20th</span> {/* TODO */}
-        </div>
-
-        <button className="btn btn-outline-primary btn-sm pull-xs-right">
-          <i className="ion-heart"></i> {article.favoritesCount}
-        </button>
-      </div>
+      <ArticleMeta article={article} variant="small" />
 
       <Link href={`/article/${article.slug}`}>
         <a className="preview-link">

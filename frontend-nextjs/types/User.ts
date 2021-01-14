@@ -3,7 +3,7 @@ type User = {
   token: string;
   username: string;
   bio: string;
-  image?: string;
+  image: string;
 };
 
 export default User;

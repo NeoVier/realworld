@@ -1,10 +1,10 @@
 import ArticleList from "components/articleList";
 import Footer from "components/footer";
 import Navbar from "components/navbar";
-import { defaultProfileImg } from "mockData";
 import Link from "next/link";
 import Article from "types/Article";
 import User from "types/User";
+import AuthorImage from "./authorImage";
 
 type Props = { user: User; articles: Article[]; favorites?: boolean };
 
@@ -18,10 +18,7 @@ const Profile = ({ user, articles, favorites = false }: Props) => {
           <div className="container">
             <div className="row">
               <div className="col-xs-12 col-md-10 offset-md-1">
-                <img
-                  src={user.image ?? defaultProfileImg}
-                  className="user-img"
-                />
+                <AuthorImage author={user} />
                 <h4>{user.username}</h4>
                 <p>{user.bio}</p>
                 <button className="btn btn-sm btn-outline-secondary action-btn">

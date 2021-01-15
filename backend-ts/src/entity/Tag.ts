@@ -1,6 +1,7 @@
-import { Column, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 import Article from "./Article";
 
+@Entity()
 class Tag {
   @PrimaryGeneratedColumn()
   id: number;
@@ -8,7 +9,7 @@ class Tag {
   @Column()
   tag: string;
 
-  @ManyToMany(() => Article)
+  @ManyToMany(() => Article, (article) => article.tagList)
   articles: Article[];
 }
 

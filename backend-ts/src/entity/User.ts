@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinTable,
   ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -28,11 +29,15 @@ class User {
   @OneToMany(() => Article, (article) => article.author)
   articles: Article[];
 
-  @ManyToMany(() => Article)
+  @ManyToMany(() => Article, (article) => article.favorited)
   favorited: Article[];
 
-  @ManyToMany(() => User)
-  followers: User[];
+  @ManyToMany(() => User, (user) => user.follows)
+  followedBy: User[];
+
+  @ManyToMany(() => User, (user) => user.followedBy)
+  @JoinTable()
+  follows: User[];
 
   @OneToMany(() => Comment, (comment) => comment.author)
   comments: Comment[];

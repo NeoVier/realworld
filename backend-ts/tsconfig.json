@@ -13,7 +13,6 @@
       "noImplicitAny": true,
       "strictNullChecks": true,
       "strictFunctionTypes": true,
-      "strictPropertyInitialization": false,
       "noImplicitThis": true,
       "noUnusedLocals": true,
       "noUnusedParameters": true,
@@ -24,9 +23,6 @@
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,
       "resolveJsonModule": true,
-      "baseUrl": ".",
-      "forceConsistentCasingInFileNames": true,
-      "allowJs": false,
-      "strict": true,
+      "baseUrl": "."
    }
 }

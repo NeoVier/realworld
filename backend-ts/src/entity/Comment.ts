@@ -1,12 +1,14 @@
 import {
   Column,
   CreateDateColumn,
+  Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import User from "./User";
 
+@Entity()
 class Comment {
   @PrimaryGeneratedColumn()
   id: number;

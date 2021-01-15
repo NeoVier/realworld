@@ -15,8 +15,10 @@ const ArticlePreview = ({ article }: Props) => {
           <p>{article.description}</p>
           <span>Read more...</span>
           <ul className="tag-list">
-            {article.tagList.map((tag) => (
-              <li className="tag-default tag-pill tag-outline">{tag}</li>
+            {article.tagList.map((tag, idx) => (
+              <li className="tag-default tag-pill tag-outline" key={idx}>
+                {tag}
+              </li>
             ))}
           </ul>
         </a>

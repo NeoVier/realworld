@@ -53,8 +53,8 @@ export default function Home() {
                 <p>Popular Tags</p>
 
                 <div className="tag-list">
-                  {popularTags.map((tag) => (
-                    <Link href="">
+                  {popularTags.map((tag, idx) => (
+                    <Link href="" key={idx}>
                       {/* TODO */}
                       <a className="tag-pill tag-default">{tag}</a>
                     </Link>

@@ -44,8 +44,8 @@ const Login = () => {
               </p>
 
               <ul className="error-messages">
-                {formInfo.errors.map((error) => (
-                  <li>{error}</li>
+                {formInfo.errors.map((error, idx) => (
+                  <li key={idx}>{error}</li>
                 ))}
               </ul>
 

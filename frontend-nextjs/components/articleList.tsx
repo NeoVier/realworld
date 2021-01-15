@@ -11,7 +11,7 @@ const ArticleList = ({ articles }: Props) =>
   ) : (
     <>
       {articles.map((article) => (
-        <ArticlePreview article={article} />
+        <ArticlePreview article={article} key={article.slug} />
       ))}
     </>
   );

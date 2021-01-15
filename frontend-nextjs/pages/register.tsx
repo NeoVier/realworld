@@ -1,9 +1,57 @@
 import Footer from "components/footer";
 import Link from "next/link";
+import { useState } from "react";
+import { validateEmail } from "utils/validateEmail";
 import Navbar from "../components/navbar";
 
+type FormInfo = {
+  errors: string[];
+  name: string;
+  email: string;
+  password: string;
+};
+
 const Register = () => {
-  const errors: string[] = ["That email is already taken"];
+  const [formInfo, setFormInfo] = useState<FormInfo>({
+    errors: [],
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const handleNameChange = (event: React.FormEvent<HTMLInputElement>) => {
+    setFormInfo({ ...formInfo, name: event.currentTarget.value });
+  };
+
+  const handleEmailChange = (event: React.FormEvent<HTMLInputElement>) => {
+    const newEmail = event.currentTarget.value;
+    const invalidEmailError = "Please enter a valid email address";
+    const newErrors = formInfo.errors.filter(
+      (email) => email !== invalidEmailError
+    );
+    if (validateEmail(newEmail)) {
+      setFormInfo({
+        ...formInfo,
+        email: newEmail,
+        errors: newErrors,
+      });
+    } else {
+      setFormInfo({
+        ...formInfo,
+        email: newEmail,
+        errors: [...newErrors, invalidEmailError],
+      });
+    }
+  };
+
+  const handlePasswordChange = (event: React.FormEvent<HTMLInputElement>) => {
+    setFormInfo({ ...formInfo, password: event.currentTarget.value });
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLButtonElement>) => {
+    console.log(formInfo);
+    event.preventDefault();
+  };
 
   return (
     <>
@@ -21,8 +69,8 @@ const Register = () => {
               </p>
 
               <ul className="error-messages">
-                {errors.map((error) => (
-                  <li>{error}</li>
+                {formInfo.errors.map((error, idx) => (
+                  <li key={idx}>{error}</li>
                 ))}
               </ul>
 
@@ -32,6 +80,7 @@ const Register = () => {
                     type="text"
                     className="form-control form-control-lg"
                     placeholder="Your Name"
+                    onChange={handleNameChange}
                   />
                 </fieldset>
 
@@ -40,6 +89,7 @@ const Register = () => {
                     type="text"
                     className="form-control form-control-lg"
                     placeholder="Email"
+                    onChange={handleEmailChange}
                   />
                 </fieldset>
 
@@ -48,10 +98,14 @@ const Register = () => {
                     type="password"
                     className="form-control form-control-lg"
                     placeholder="Password"
+                    onChange={handlePasswordChange}
                   />
                 </fieldset>
 
-                <button className="btn btn-lg btn-primary pull-xs-right">
+                <button
+                  className="btn btn-lg btn-primary pull-xs-right"
+                  onClick={handleSubmit}
+                >
                   Sign up
                 </button>
               </form>

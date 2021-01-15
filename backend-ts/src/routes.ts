@@ -1,4 +1,5 @@
 import ArticleController from "./controller/ArticleController";
+import TagController from "./controller/TagController";
 import UserController from "./controller/UserController";
 
 export const Routes = [
@@ -32,5 +33,12 @@ export const Routes = [
     route: "/api/articles/:slug",
     controller: ArticleController,
     action: "one",
+  },
+
+  {
+    method: "get",
+    route: "/api/tags",
+    controller: TagController,
+    action: "all",
   },
 ];

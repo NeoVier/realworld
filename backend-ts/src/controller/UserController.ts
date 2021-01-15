@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { getRepository } from "typeorm";
 import User from "../entity/User";
 
-export class UserController {
+class UserController {
   private userRepository = getRepository(User);
 
   async all(_: Request, _response: Response, _next: NextFunction) {
@@ -22,3 +22,5 @@ export class UserController {
     if (userToRemove) await this.userRepository.remove(userToRemove);
   }
 }
+
+export default UserController;

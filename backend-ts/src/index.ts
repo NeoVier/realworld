@@ -49,10 +49,12 @@ createConnection()
     connection.manager.save(user);
 
     const article = {
-      author: user,
-      body: "Lorem ipsum",
-      description: "This is my first article",
       title: "My first article",
+      description: "This is my first article",
+      body: "Lorem ipsum",
+      tagList: [],
+      author: user,
+      favorited: [],
     };
 
     // insert new users for test

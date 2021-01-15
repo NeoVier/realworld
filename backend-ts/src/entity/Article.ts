@@ -1,5 +1,6 @@
 import {
   AfterLoad,
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -21,6 +22,7 @@ class Article {
   @Column()
   title: string;
 
+  @Column()
   slug: string;
 
   @Column()
@@ -50,12 +52,15 @@ class Article {
 
   @AfterLoad()
   updateFavoriteCount() {
-    this.favoriteCount = this.favorited.length;
+    this.favoriteCount =
+      this.favorited === undefined ? 0 : this.favorited.length;
   }
 
-  @AfterLoad()
-  updateSlug() {
+  @BeforeInsert()
+  beforeInsertActions() {
+    console.log(`BEFORE: ${this.slug}`);
     this.slug = string_to_slug(this.title);
+    console.log(`AFTER: ${this.slug}`);
   }
 }
 

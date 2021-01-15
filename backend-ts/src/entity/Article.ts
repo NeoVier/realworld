@@ -58,9 +58,7 @@ class Article {
 
   @BeforeInsert()
   beforeInsertActions() {
-    console.log(`BEFORE: ${this.slug}`);
     this.slug = string_to_slug(this.title);
-    console.log(`AFTER: ${this.slug}`);
   }
 }
 

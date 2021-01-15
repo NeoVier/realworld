@@ -1,18 +1,41 @@
-import {Entity, PrimaryGeneratedColumn, Column} from "typeorm";
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from "typeorm";
+import Article from "./Article";
+import Comment from "./Comment";
 
 @Entity()
-export class User {
+class User {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @PrimaryGeneratedColumn()
-    id: number;
+  @Column()
+  email: string;
 
-    @Column()
-    firstName: string;
+  @Column()
+  username: string;
 
-    @Column()
-    lastName: string;
+  @Column()
+  bio: string;
 
-    @Column()
-    age: number;
+  @Column({ nullable: true })
+  image: string;
 
+  @OneToMany(() => Article, (article) => article.author)
+  articles: Article[];
+
+  @ManyToMany(() => Article)
+  favorited: Article[];
+
+  @ManyToMany(() => User)
+  followers: User[];
+
+  @OneToMany(() => Comment, (comment) => comment.author)
+  comments: Comment[];
 }
+
+export default User;

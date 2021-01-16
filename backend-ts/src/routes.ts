@@ -64,6 +64,12 @@ export const Routes = [
     controller: ArticleController,
     action: "create",
   },
+  {
+    method: "put",
+    route: "/api/articles/:slug",
+    controller: ArticleController,
+    action: "update",
+  },
 
   {
     method: "get",

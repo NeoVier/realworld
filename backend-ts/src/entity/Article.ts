@@ -1,6 +1,7 @@
 import {
   AfterLoad,
   BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   Entity,
@@ -57,6 +58,7 @@ class Article {
   }
 
   @BeforeInsert()
+  @BeforeUpdate()
   beforeInsertActions() {
     this.slug = string_to_slug(this.title);
     this.favoritesCount =

@@ -62,7 +62,6 @@ class ArticleController {
       take: limit,
       relations: ["tagList", "author", "favorited"],
     });
-    console.log(articles);
 
     return { articles: articles, articlesCount: articles.length };
   }
@@ -111,6 +110,39 @@ class ArticleController {
         favoritesCount: 0,
       })
     );
+
+    return { article: newArticle };
+  }
+
+  async update(request: Request, response: Response, _next: NextFunction) {
+    const auth = await useAuth(request, response, this.authorRepository);
+    const slugToUpdate = request.params.slug;
+
+    if (!auth.user) {
+      return { errors: auth.errors! };
+    }
+
+    const articleToUpdate = await this.articleRepository.findOne({
+      where: { slug: slugToUpdate },
+    });
+
+    if (!articleToUpdate) {
+      return { errors: { slug: ["slug not found"] } };
+    }
+
+    const newArticleFields = request.body.article;
+    const newTitle = newArticleFields.title;
+    const newDescription = newArticleFields.description;
+    const newBody = newArticleFields.body;
+
+    const newArticle = await this.articleRepository.save({
+      ...articleToUpdate,
+      title: newTitle ? newTitle : articleToUpdate.title,
+      description: newDescription
+        ? newDescription
+        : articleToUpdate.description,
+      body: newBody ? newBody : articleToUpdate.body,
+    });
 
     return { article: newArticle };
   }

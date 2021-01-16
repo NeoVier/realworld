@@ -59,7 +59,7 @@ class UserController {
       })
     );
 
-    const token = jwt.sign({ _id: newUser.id }, process.env.JWT_SECRET!);
+    const token = this.generateToken(newUser);
 
     return {
       user: {
@@ -70,6 +70,47 @@ class UserController {
         image: newUser.image,
       },
     };
+  }
+
+  async login(request: Request, _response: Response, _next: NextFunction) {
+    const { email, password } = request.body.user;
+
+    const userWithEmail = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (!userWithEmail) {
+      return {
+        errors: {
+          email: ["email not registered"],
+        },
+      };
+    }
+
+    const isPasswordValid = await argon2.verify(
+      userWithEmail.password,
+      password
+    );
+
+    return isPasswordValid
+      ? {
+          user: {
+            email,
+            token: this.generateToken(userWithEmail),
+            username: userWithEmail.username,
+            bio: userWithEmail.bio,
+            image: userWithEmail.image,
+          },
+        }
+      : {
+          errors: {
+            password: ["incorrect password"],
+          },
+        };
+  }
+
+  generateToken(user: User) {
+    return jwt.sign({ _id: user.id }, process.env.JWT_SECRET!);
   }
 
   // async remove(request: Request, _response: Response, _next: NextFunction) {

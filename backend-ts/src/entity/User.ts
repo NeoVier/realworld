@@ -40,7 +40,7 @@ class User {
   @ManyToMany(() => User, (user) => user.follows)
   followedBy: User[];
 
-  @ManyToMany(() => User, (user) => user.followedBy)
+  @ManyToMany(() => User, (user) => user.followedBy, { cascade: true })
   @JoinTable()
   follows: User[];
 

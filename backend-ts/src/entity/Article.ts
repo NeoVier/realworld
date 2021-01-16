@@ -31,7 +31,7 @@ class Article {
   @Column()
   body: string;
 
-  @ManyToMany(() => Tag, (tag) => tag.articles)
+  @ManyToMany(() => Tag, (tag) => tag.articles, { cascade: true })
   @JoinTable()
   tagList: Tag[];
 
@@ -44,7 +44,7 @@ class Article {
   @ManyToOne(() => User, (user) => user.articles)
   author: User;
 
-  @ManyToMany(() => User, (user) => user.favorited)
+  @ManyToMany(() => User, (user) => user.favorited, { cascade: true })
   @JoinTable()
   favorited: User[];
 

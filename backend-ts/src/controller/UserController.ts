@@ -28,6 +28,15 @@ type AuthResult = {
   };
 };
 
+type Profile = {
+  profile: {
+    username: string;
+    bio: string;
+    image: string | null;
+    following?: boolean;
+  };
+};
+
 const isAuth = (authResult: AuthResult): boolean => {
   return !!authResult.user;
 };
@@ -248,6 +257,57 @@ class UserController {
           : user.username,
         bio: updatedFields.bio ? updatedFields.bio : user.bio,
         image: updatedFields.image ? updatedFields.image : user.image,
+      },
+    };
+  }
+
+  async getProfile(
+    request: Request,
+    _response: Response,
+    _next: NextFunction
+  ): Promise<Profile | ValidationError> {
+    const profileUsername = request.params.username;
+    const auth = await this.useAuth(request);
+
+    const profileUser = await this.userRepository.findOne({
+      where: { username: profileUsername },
+    });
+
+    if (!profileUser) {
+      return { errors: { username: ["username not found"] } };
+    }
+
+    if (auth.errors) {
+      return {
+        profile: {
+          username: profileUser.username,
+          bio: profileUser.bio,
+          image: profileUser.image,
+        },
+      };
+    }
+
+    const currentUser = await this.userRepository.findOne({
+      where: {
+        username: auth.user!.username,
+      },
+      relations: ["follows"],
+    });
+
+    if (!currentUser) {
+      return {
+        errors: { username: ["username not found"] },
+      };
+    }
+
+    const following = currentUser.follows.includes(profileUser);
+
+    return {
+      profile: {
+        username: profileUser.username,
+        bio: profileUser.bio,
+        image: profileUser.image,
+        following,
       },
     };
   }

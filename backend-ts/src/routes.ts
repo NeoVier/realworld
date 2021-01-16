@@ -27,6 +27,12 @@ export const Routes = [
     controller: UserController,
     action: "updateUser",
   },
+  {
+    method: "get",
+    route: "/api/profiles/:username",
+    controller: UserController,
+    action: "getProfile",
+  },
 
   {
     method: "get",

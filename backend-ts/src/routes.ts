@@ -15,6 +15,12 @@ export const Routes = [
     controller: UserController,
     action: "login",
   },
+  {
+    method: "get",
+    route: "/api/user",
+    controller: UserController,
+    action: "getUser",
+  },
 
   {
     method: "get",

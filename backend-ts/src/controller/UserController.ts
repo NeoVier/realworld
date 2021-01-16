@@ -14,7 +14,9 @@ class UserController {
   private userRepository = getRepository(User);
 
   generateToken(user: User) {
-    return jwt.sign({ _id: user.id }, process.env.JWT_SECRET!);
+    return jwt.sign({ _id: user.id }, process.env.JWT_SECRET!, {
+      expiresIn: "10y",
+    });
   }
 
   async register(request: Request, _response: Response, _next: NextFunction) {
@@ -99,6 +101,49 @@ class UserController {
             password: ["incorrect password"],
           },
         };
+  }
+
+  async getUser(request: Request, _response: Response, _next: NextFunction) {
+    const tokenHeader = request.headers.authorization;
+
+    if (!tokenHeader) {
+      return {
+        errors: {
+          token: ["No token informed"],
+        },
+      };
+    }
+    const token = tokenHeader.split(" ")[1];
+    const decodedJwt = jwt.decode(token);
+    try {
+      const userId = (decodedJwt as { _id: number })._id;
+
+      const user = await this.userRepository.findOne(userId);
+
+      if (!user) {
+        return {
+          errors: {
+            token: ["Could not find user"],
+          },
+        };
+      }
+
+      return {
+        user: {
+          email: user.email,
+          token,
+          username: user.username,
+          bio: user.bio,
+          image: user.image,
+        },
+      };
+    } catch {
+      return {
+        errors: {
+          token: ["Error validating user"],
+        },
+      };
+    }
   }
 }
 

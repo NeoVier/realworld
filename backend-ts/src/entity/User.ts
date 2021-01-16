@@ -21,6 +21,11 @@ class User {
   username: string;
 
   @Column()
+  password: string;
+
+  token: string;
+
+  @Column()
   bio: string;
 
   @Column({ nullable: true })

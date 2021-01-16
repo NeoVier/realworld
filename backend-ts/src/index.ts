@@ -1,13 +1,12 @@
 import bodyParser from "body-parser";
+import cors from "cors";
 import express, { Request, Response } from "express";
 import "reflect-metadata";
 import { createConnection } from "typeorm";
-import Article from "./entity/Article";
-import User from "./entity/User";
 import { Routes } from "./routes";
 
 createConnection()
-  .then(async (connection) => {
+  .then(async (_connection) => {
     // create express app
     const app = express();
     app.use(bodyParser.json());
@@ -36,53 +35,30 @@ createConnection()
     });
 
     // setup express app here
-    // ...
+    app.use(cors());
 
     // start express server
     app.listen(3000);
 
-    const user = connection.manager.create(User, {
-      email: "henrique.buss@hotmail.com",
-      username: "neovier",
-      bio: "functional programming enthusiast",
-    });
-    connection.manager.save(user);
+    // const user = connection.manager.create(User, {
+    //   email: "henrique.buss@hotmail.com",
+    //   username: "neovier",
+    //   bio: "functional programming enthusiast",
+    // });
+    // connection.manager.save(user);
 
-    const article = {
-      title: "My first article",
-      description: "This is my first article",
-      body: "Lorem ipsum",
-      tagList: [],
-      author: user,
-      favorited: [],
-    };
+    // const article = {
+    //   title: "My first article",
+    //   description: "This is my first article",
+    //   body: "Lorem ipsum",
+    //   tagList: [],
+    //   author: user,
+    //   favorited: [],
+    // };
 
-    // insert new users for test
-    await connection.manager.save(
-      // connection.manager.create(User, {
-      //   email: "henrique.buss@hotmail.com",
-      //   username: "neovier",
-      //   bio: "functional programming enthusiast",
-      //   articles: [],
-      //   favorited: [],
-      //   followedBy: [],
-      //   follows: [],
-      //   comments: [],
-      // })
-      connection.manager.create(Article, article)
-      //   connection.manager.create(User, {
-      //     firstName: "Timber",
-      //     lastName: "Saw",
-      //     age: 27,
-      //   })
-      // );
-      // await connection.manager.save(
-      //   connection.manager.create(User, {
-      //     firstName: "Phantom",
-      //     lastName: "Assassin",
-      //     age: 24,
-      //   })
-    );
+    // await connection.manager.save(
+    //   connection.manager.create(Article, article)
+    // );
 
     console.log("Express server has started on port 3000.");
   })

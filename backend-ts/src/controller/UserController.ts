@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { getRepository } from "typeorm";
 import User from "../entity/User";
+import { AuthResult, isAuth, ReturnUser, useAuth } from "../utils/useAuth";
 import {
   chainResults,
   validateEmail,
@@ -11,22 +12,6 @@ import {
   ValidationError,
   ValidationResult,
 } from "../utils/validateInput";
-
-type ReturnUser = {
-  email: string;
-  token: string;
-  username: string;
-  bio: string;
-  image: string | null;
-};
-
-type AuthResult = {
-  user?: ReturnUser;
-  id?: number;
-  errors?: {
-    token: string[];
-  };
-};
 
 type Profile = {
   profile: {
@@ -37,10 +22,6 @@ type Profile = {
   };
 };
 
-const isAuth = (authResult: AuthResult): boolean => {
-  return !!authResult.user;
-};
-
 class UserController {
   private userRepository = getRepository(User);
 
@@ -48,54 +29,6 @@ class UserController {
     return jwt.sign({ _id: userId }, process.env.JWT_SECRET!, {
       expiresIn: "10y",
     });
-  }
-
-  async useAuth(request: Request, response: Response): Promise<AuthResult> {
-    const tokenHeader = request.headers.authorization;
-
-    if (!tokenHeader) {
-      response.statusCode = 401;
-      return {
-        errors: {
-          token: ["No token informed"],
-        },
-      };
-    }
-    const token = tokenHeader.split(" ")[1];
-
-    const decodedJwt = jwt.decode(token);
-    try {
-      const userId = (decodedJwt as { _id: number })._id;
-
-      const user = await this.userRepository.findOne(userId);
-
-      if (!user) {
-        response.statusCode = 422;
-        return {
-          errors: {
-            token: ["Could not find user"],
-          },
-        };
-      }
-
-      return {
-        user: {
-          email: user.email,
-          token,
-          username: user.username,
-          bio: user.bio,
-          image: user.image,
-        },
-        id: userId,
-      };
-    } catch {
-      response.statusCode = 422;
-      return {
-        errors: {
-          token: ["Error validating user"],
-        },
-      };
-    }
   }
 
   async register(
@@ -200,7 +133,7 @@ class UserController {
     response: Response,
     _next: NextFunction
   ): Promise<AuthResult> {
-    const auth = await this.useAuth(request, response);
+    const auth = await useAuth(request, response, this.userRepository);
     if (isAuth(auth)) {
       return { user: auth.user! };
     }
@@ -213,7 +146,7 @@ class UserController {
     response: Response,
     _next: NextFunction
   ): Promise<ValidationError | ReturnUser | AuthResult> {
-    const authResult = await this.useAuth(request, response);
+    const authResult = await useAuth(request, response, this.userRepository);
     if (!isAuth(authResult)) {
       return authResult;
     }
@@ -276,7 +209,7 @@ class UserController {
     _next: NextFunction
   ): Promise<Profile | ValidationError> {
     const profileUsername = request.params.username;
-    const auth = await this.useAuth(request, response);
+    const auth = await useAuth(request, response, this.userRepository);
 
     const profileUser = await this.userRepository.findOne({
       where: { username: profileUsername },
@@ -328,7 +261,7 @@ class UserController {
     _next: NextFunction
   ): Promise<Profile | ValidationError> {
     const usernameToFollow = request.params.username;
-    const auth = await this.useAuth(request, response);
+    const auth = await useAuth(request, response, this.userRepository);
 
     if (auth.errors) {
       return { errors: auth.errors };
@@ -380,7 +313,7 @@ class UserController {
     _next: NextFunction
   ): Promise<ValidationError | Profile> {
     const usernameToUnfollow = request.params.username;
-    const auth = await this.useAuth(request, response);
+    const auth = await useAuth(request, response, this.userRepository);
 
     if (auth.errors) {
       return { errors: auth.errors };

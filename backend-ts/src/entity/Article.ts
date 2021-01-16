@@ -48,17 +48,19 @@ class Article {
   @JoinTable()
   favorited: User[];
 
-  favoriteCount: number;
+  favoritesCount: number;
 
   @AfterLoad()
   updateFavoriteCount() {
-    this.favoriteCount =
+    this.favoritesCount =
       this.favorited === undefined ? 0 : this.favorited.length;
   }
 
   @BeforeInsert()
   beforeInsertActions() {
     this.slug = string_to_slug(this.title);
+    this.favoritesCount =
+      this.favorited === undefined ? 0 : this.favorited.length;
   }
 }
 

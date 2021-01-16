@@ -52,6 +52,18 @@ export const Routes = [
     controller: ArticleController,
     action: "one",
   },
+  // {
+  //   method: "get",
+  //   route: "/api/articles",
+  //   controller: ArticleController,
+  //   action: "list",
+  // },
+  {
+    method: "post",
+    route: "/api/articles",
+    controller: ArticleController,
+    action: "create",
+  },
 
   {
     method: "get",

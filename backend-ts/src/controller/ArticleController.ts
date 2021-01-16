@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getRepository } from "typeorm";
+import { FindConditions, getRepository } from "typeorm";
 import Article from "../entity/Article";
 import Tag from "../entity/Tag";
 import User from "../entity/User";
@@ -16,63 +16,56 @@ class ArticleController {
     });
   }
 
-  // async list(
-  //   request: Request,
-  //   _reponse: Response,
-  //   _next: NextFunction
-  // ): Promise<{ articles: Article[] }> {
-  //   const tag = request.query.tag;
-  //   console.log("tag:");
-  //   console.log(tag);
-  //   const authorUsername = request.query.author;
-  //   const author = await this.authorRepository.findOne({
-  //     where: { username: authorUsername },
-  //   });
-  //   console.log("author:");
-  //   console.log(author);
-  //   const favoritedBy = request.query.favorited;
-  //   console.log("favoritedBy:");
-  //   console.log(favoritedBy);
-  //   const limit =
-  //     typeof request.query.limit === "string"
-  //       ? parseInt(request.query.limit)
-  //       : 20;
-  //   console.log("limit:");
-  //   console.log(limit);
-  //   const offset =
-  //     typeof request.query.offset === "string"
-  //       ? parseInt(request.query.offset)
-  //       : 0;
-  //   console.log("offset:");
-  //   console.log(offset);
+  async list(
+    request: Request,
+    _reponse: Response,
+    _next: NextFunction
+  ): Promise<{ articles: Article[]; articlesCount: number }> {
+    let filters: FindConditions<Article> = {};
+    // TODO - Filter by tag
+    // const tagName = request.query.tag;
+    // const tag = await this.tagRepository.findOne({
+    //   where: { tag: tagName },
+    // });
+    // const tags = await this.tagRepository.find();
+    // console.log(tags);
 
-  //   const params: FindManyOptions<Article> = {
-  //     where: {
-  //       tagList: tag,
-  //       // author: author,
-  //       // favorited:
-  //     },
-  //     order: { updatedAt: "DESC" },
-  //     skip: offset,
-  //     take: limit,
-  //     relations: ["author", "favorited", "tagList"],
-  //   };
-  //   console.log("params:");
-  //   console.log(params);
+    const authorUsername = request.query.author;
+    const author = await this.authorRepository.findOne({
+      where: { username: authorUsername },
+    });
+    if (author) {
+      filters = { ...filters, author };
+    }
 
-  //   const articles = await this.articleRepository.find({
-  //     where: {
-  //       body: "Lorem ipsum",
-  //       tagList: ["dragon"],
-  //     },
-  //     order: { updatedAt: "DESC" },
-  //     skip: offset,
-  //     take: limit,
-  //   });
-  //   this.articleRepository.findAndCount;
-  //   console.log(articles);
-  //   return { articles: articles };
-  // }
+    // TODO - Filter by favorited
+    // const favoritedByUsername = request.query.favorited;
+    // const favoritedBy = await this.authorRepository.findOne({
+    //   where: {
+    //     username: favoritedByUsername,
+    //   },
+    // });
+
+    const limit =
+      typeof request.query.limit === "string"
+        ? parseInt(request.query.limit)
+        : 20;
+
+    const offset =
+      typeof request.query.offset === "string"
+        ? parseInt(request.query.offset)
+        : 0;
+
+    const articles = await this.articleRepository.find({
+      order: { updatedAt: "DESC" },
+      skip: offset,
+      take: limit,
+      relations: ["tagList", "author", "favorited"],
+    });
+    console.log(articles);
+
+    return { articles: articles, articlesCount: articles.length };
+  }
 
   async create(request: Request, response: Response, _next: NextFunction) {
     const auth = await useAuth(request, response, this.authorRepository);

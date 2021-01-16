@@ -70,6 +70,12 @@ export const Routes = [
     controller: ArticleController,
     action: "update",
   },
+  {
+    method: "delete",
+    route: "/api/articles/:slug",
+    controller: ArticleController,
+    action: "delete",
+  },
 
   {
     method: "get",

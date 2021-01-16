@@ -146,6 +146,17 @@ class ArticleController {
 
     return { article: newArticle };
   }
+
+  async delete(request: Request, response: Response, _next: NextFunction) {
+    const auth = await useAuth(request, response, this.authorRepository);
+    const slugToDelete = request.params.slug;
+    if (!auth.user) {
+      return { errors: auth.errors };
+    }
+
+    await this.articleRepository.delete({ slug: slugToDelete });
+    return { status: "ok" };
+  }
 }
 
 export default ArticleController;

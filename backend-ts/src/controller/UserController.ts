@@ -311,6 +311,56 @@ class UserController {
       },
     };
   }
+
+  async followUser(
+    request: Request,
+    _response: Response,
+    _next: NextFunction
+  ): Promise<Profile | ValidationError> {
+    const usernameToFollow = request.params.username;
+    const auth = await this.useAuth(request);
+
+    if (auth.errors) {
+      return { errors: auth.errors };
+    }
+
+    const userToFollow = await this.userRepository.findOne({
+      where: { username: usernameToFollow },
+    });
+
+    if (!userToFollow) {
+      return {
+        errors: { username: ["username not found"] },
+      };
+    }
+
+    const currentUser = await this.userRepository.findOne({
+      where: {
+        username: auth.user!.username,
+      },
+      relations: ["follows"],
+    });
+
+    if (!currentUser) {
+      return {
+        errors: { username: ["username not found"] },
+      };
+    }
+
+    if (!currentUser.follows.includes(userToFollow)) {
+      currentUser.follows.push(userToFollow);
+      this.userRepository.save(currentUser!);
+    }
+
+    return {
+      profile: {
+        bio: userToFollow.bio,
+        image: userToFollow.image,
+        username: userToFollow.username,
+        following: true,
+      },
+    };
+  }
 }
 
 export default UserController;

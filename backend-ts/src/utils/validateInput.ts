@@ -1,15 +1,16 @@
 import emailValidator from "email-validator";
 
-export type ValidationResult =
-  | "ok"
-  | {
-      errors: {
-        body?: string[];
-        email?: string[];
-        username?: string[];
-        password?: string[];
-      };
-    };
+export type ValidationError = {
+  errors: {
+    body?: string[];
+    email?: string[];
+    username?: string[];
+    password?: string[];
+    token?: string[];
+  };
+};
+
+export type ValidationResult = "ok" | ValidationError;
 
 export const chainResults = (results: ValidationResult[]): ValidationResult => {
   const tryAppend = (

@@ -8,17 +8,20 @@ import {
   validateEmail,
   validatePassword,
   validateUsername,
+  ValidationError,
   ValidationResult,
 } from "../utils/validateInput";
 
+type ReturnUser = {
+  email: string;
+  token: string;
+  username: string;
+  bio: string;
+  image: string | null;
+};
+
 type AuthResult = {
-  user?: {
-    email: string;
-    token: string;
-    username: string;
-    bio: string;
-    image: string | null;
-  };
+  user?: ReturnUser;
   id?: number;
   errors?: {
     token: string[];
@@ -83,7 +86,11 @@ class UserController {
     }
   }
 
-  async register(request: Request, _response: Response, _next: NextFunction) {
+  async register(
+    request: Request,
+    _response: Response,
+    _next: NextFunction
+  ): Promise<{ user: ReturnUser } | ValidationError> {
     const { username, email, password } = request.body.user;
 
     const existingUsers = await this.userRepository.find();
@@ -130,7 +137,11 @@ class UserController {
     };
   }
 
-  async login(request: Request, _response: Response, _next: NextFunction) {
+  async login(
+    request: Request,
+    _response: Response,
+    _next: NextFunction
+  ): Promise<ValidationError | { user: ReturnUser }> {
     const { email, password } = request.body.user;
 
     const userWithEmail = await this.userRepository.findOne({
@@ -167,16 +178,24 @@ class UserController {
         };
   }
 
-  async getUser(request: Request, _response: Response, _next: NextFunction) {
+  async getUser(
+    request: Request,
+    _response: Response,
+    _next: NextFunction
+  ): Promise<AuthResult> {
     const auth = await this.useAuth(request);
     if (isAuth(auth)) {
-      return auth.user!;
+      return { user: auth.user! };
     }
 
-    return auth.errors!;
+    return { errors: auth.errors! };
   }
 
-  async updateUser(request: Request, _response: Response, _next: NextFunction) {
+  async updateUser(
+    request: Request,
+    _response: Response,
+    _next: NextFunction
+  ): Promise<ValidationError | ReturnUser | AuthResult> {
     const authResult = await this.useAuth(request);
     if (!isAuth(authResult)) {
       return authResult;

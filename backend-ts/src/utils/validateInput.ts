@@ -1,6 +1,6 @@
 import emailValidator from "email-validator";
 
-type ValidationResult =
+export type ValidationResult =
   | "ok"
   | {
       errors: {

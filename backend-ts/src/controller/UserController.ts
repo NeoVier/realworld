@@ -8,15 +8,79 @@ import {
   validateEmail,
   validatePassword,
   validateUsername,
+  ValidationResult,
 } from "../utils/validateInput";
+
+type AuthResult = {
+  user?: {
+    email: string;
+    token: string;
+    username: string;
+    bio: string;
+    image: string | null;
+  };
+  id?: number;
+  errors?: {
+    token: string[];
+  };
+};
+
+const isAuth = (authResult: AuthResult): boolean => {
+  return !!authResult.user;
+};
 
 class UserController {
   private userRepository = getRepository(User);
 
-  generateToken(user: User) {
-    return jwt.sign({ _id: user.id }, process.env.JWT_SECRET!, {
+  generateToken(userId: number) {
+    return jwt.sign({ _id: userId }, process.env.JWT_SECRET!, {
       expiresIn: "10y",
     });
+  }
+
+  async useAuth(request: Request): Promise<AuthResult> {
+    const tokenHeader = request.headers.authorization;
+
+    if (!tokenHeader) {
+      return {
+        errors: {
+          token: ["No token informed"],
+        },
+      };
+    }
+    const token = tokenHeader.split(" ")[1];
+
+    const decodedJwt = jwt.decode(token);
+    try {
+      const userId = (decodedJwt as { _id: number })._id;
+
+      const user = await this.userRepository.findOne(userId);
+
+      if (!user) {
+        return {
+          errors: {
+            token: ["Could not find user"],
+          },
+        };
+      }
+
+      return {
+        user: {
+          email: user.email,
+          token,
+          username: user.username,
+          bio: user.bio,
+          image: user.image,
+        },
+        id: userId,
+      };
+    } catch {
+      return {
+        errors: {
+          token: ["Error validating user"],
+        },
+      };
+    }
   }
 
   async register(request: Request, _response: Response, _next: NextFunction) {
@@ -53,7 +117,7 @@ class UserController {
       })
     );
 
-    const token = this.generateToken(newUser);
+    const token = this.generateToken(newUser.id);
 
     return {
       user: {
@@ -90,7 +154,7 @@ class UserController {
       ? {
           user: {
             email,
-            token: this.generateToken(userWithEmail),
+            token: this.generateToken(userWithEmail.id),
             username: userWithEmail.username,
             bio: userWithEmail.bio,
             image: userWithEmail.image,
@@ -104,46 +168,69 @@ class UserController {
   }
 
   async getUser(request: Request, _response: Response, _next: NextFunction) {
-    const tokenHeader = request.headers.authorization;
-
-    if (!tokenHeader) {
-      return {
-        errors: {
-          token: ["No token informed"],
-        },
-      };
+    const auth = await this.useAuth(request);
+    if (isAuth(auth)) {
+      return auth.user!;
     }
-    const token = tokenHeader.split(" ")[1];
-    const decodedJwt = jwt.decode(token);
-    try {
-      const userId = (decodedJwt as { _id: number })._id;
 
-      const user = await this.userRepository.findOne(userId);
+    return auth.errors!;
+  }
 
-      if (!user) {
-        return {
-          errors: {
-            token: ["Could not find user"],
-          },
-        };
-      }
-
-      return {
-        user: {
-          email: user.email,
-          token,
-          username: user.username,
-          bio: user.bio,
-          image: user.image,
-        },
-      };
-    } catch {
-      return {
-        errors: {
-          token: ["Error validating user"],
-        },
-      };
+  async updateUser(request: Request, _response: Response, _next: NextFunction) {
+    const authResult = await this.useAuth(request);
+    if (!isAuth(authResult)) {
+      return authResult;
     }
+
+    const user = authResult.user!;
+    const userId = authResult.id!;
+    const updatedFields = request.body.user;
+    const existingUsers = await this.userRepository.find();
+    const existingEmails = existingUsers
+      .map((user) => user.email)
+      .filter((email) => email !== user.email);
+    const existingUsernames = existingUsers
+      .map((user) => user.username)
+      .filter((username) => username !== user.username);
+    const fieldsToValidate: ValidationResult[] = [];
+
+    if (updatedFields.password) {
+      fieldsToValidate.push(validatePassword(updatedFields.password));
+    }
+    if (updatedFields.email) {
+      fieldsToValidate.push(validateEmail(updatedFields.email, existingEmails));
+    }
+    if (updatedFields.username) {
+      fieldsToValidate.push(
+        validateUsername(updatedFields.username, existingUsernames)
+      );
+    }
+    const validation = chainResults(fieldsToValidate);
+    if (validation !== "ok") {
+      return validation;
+    }
+
+    const newPassword = updatedFields.password;
+    if (newPassword) {
+      const hashedPassword = argon2.hash(newPassword);
+      updatedFields.password = hashedPassword;
+    }
+
+    await this.userRepository.update(userId, {
+      ...updatedFields,
+    });
+
+    return {
+      user: {
+        email: updatedFields.email ? updatedFields.email : user.email,
+        token: this.generateToken(userId),
+        username: updatedFields.username
+          ? updatedFields.username
+          : user.username,
+        bio: updatedFields.bio ? updatedFields.bio : user.bio,
+        image: updatedFields.image ? updatedFields.image : user.image,
+      },
+    };
   }
 }
 

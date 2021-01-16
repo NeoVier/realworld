@@ -50,10 +50,11 @@ class UserController {
     });
   }
 
-  async useAuth(request: Request): Promise<AuthResult> {
+  async useAuth(request: Request, response: Response): Promise<AuthResult> {
     const tokenHeader = request.headers.authorization;
 
     if (!tokenHeader) {
+      response.statusCode = 401;
       return {
         errors: {
           token: ["No token informed"],
@@ -69,6 +70,7 @@ class UserController {
       const user = await this.userRepository.findOne(userId);
 
       if (!user) {
+        response.statusCode = 422;
         return {
           errors: {
             token: ["Could not find user"],
@@ -87,6 +89,7 @@ class UserController {
         id: userId,
       };
     } catch {
+      response.statusCode = 422;
       return {
         errors: {
           token: ["Error validating user"],
@@ -97,7 +100,7 @@ class UserController {
 
   async register(
     request: Request,
-    _response: Response,
+    response: Response,
     _next: NextFunction
   ): Promise<{ user: ReturnUser } | ValidationError> {
     const { username, email, password } = request.body.user;
@@ -113,6 +116,7 @@ class UserController {
     ]);
 
     if (validation !== "ok") {
+      response.statusCode = 422;
       return validation;
     }
 
@@ -148,7 +152,7 @@ class UserController {
 
   async login(
     request: Request,
-    _response: Response,
+    response: Response,
     _next: NextFunction
   ): Promise<ValidationError | { user: ReturnUser }> {
     const { email, password } = request.body.user;
@@ -158,6 +162,7 @@ class UserController {
     });
 
     if (!userWithEmail) {
+      response.statusCode = 422;
       return {
         errors: {
           email: ["email not registered"],
@@ -170,29 +175,32 @@ class UserController {
       password
     );
 
-    return isPasswordValid
-      ? {
-          user: {
-            email,
-            token: this.generateToken(userWithEmail.id),
-            username: userWithEmail.username,
-            bio: userWithEmail.bio,
-            image: userWithEmail.image,
-          },
-        }
-      : {
-          errors: {
-            password: ["incorrect password"],
-          },
-        };
+    if (!isPasswordValid) {
+      response.statusCode = 422;
+      return {
+        errors: {
+          password: ["incorrect password"],
+        },
+      };
+    }
+
+    return {
+      user: {
+        email,
+        token: this.generateToken(userWithEmail.id),
+        username: userWithEmail.username,
+        bio: userWithEmail.bio,
+        image: userWithEmail.image,
+      },
+    };
   }
 
   async getUser(
     request: Request,
-    _response: Response,
+    response: Response,
     _next: NextFunction
   ): Promise<AuthResult> {
-    const auth = await this.useAuth(request);
+    const auth = await this.useAuth(request, response);
     if (isAuth(auth)) {
       return { user: auth.user! };
     }
@@ -202,10 +210,10 @@ class UserController {
 
   async updateUser(
     request: Request,
-    _response: Response,
+    response: Response,
     _next: NextFunction
   ): Promise<ValidationError | ReturnUser | AuthResult> {
-    const authResult = await this.useAuth(request);
+    const authResult = await this.useAuth(request, response);
     if (!isAuth(authResult)) {
       return authResult;
     }
@@ -235,6 +243,7 @@ class UserController {
     }
     const validation = chainResults(fieldsToValidate);
     if (validation !== "ok") {
+      response.statusCode = 422;
       return validation;
     }
 
@@ -263,17 +272,18 @@ class UserController {
 
   async getProfile(
     request: Request,
-    _response: Response,
+    response: Response,
     _next: NextFunction
   ): Promise<Profile | ValidationError> {
     const profileUsername = request.params.username;
-    const auth = await this.useAuth(request);
+    const auth = await this.useAuth(request, response);
 
     const profileUser = await this.userRepository.findOne({
       where: { username: profileUsername },
     });
 
     if (!profileUser) {
+      response.statusCode = 422;
       return { errors: { username: ["username not found"] } };
     }
 
@@ -314,11 +324,11 @@ class UserController {
 
   async followUser(
     request: Request,
-    _response: Response,
+    response: Response,
     _next: NextFunction
   ): Promise<Profile | ValidationError> {
     const usernameToFollow = request.params.username;
-    const auth = await this.useAuth(request);
+    const auth = await this.useAuth(request, response);
 
     if (auth.errors) {
       return { errors: auth.errors };
@@ -329,6 +339,7 @@ class UserController {
     });
 
     if (!userToFollow) {
+      response.statusCode = 422;
       return {
         errors: { username: ["username not found"] },
       };
@@ -342,6 +353,7 @@ class UserController {
     });
 
     if (!currentUser) {
+      response.statusCode = 403;
       return {
         errors: { username: ["username not found"] },
       };
@@ -364,11 +376,11 @@ class UserController {
 
   async unfollowUser(
     request: Request,
-    _response: Response,
+    response: Response,
     _next: NextFunction
   ): Promise<ValidationError | Profile> {
     const usernameToUnfollow = request.params.username;
-    const auth = await this.useAuth(request);
+    const auth = await this.useAuth(request, response);
 
     if (auth.errors) {
       return { errors: auth.errors };
@@ -379,6 +391,7 @@ class UserController {
     });
 
     if (!userToUnfollow) {
+      response.statusCode = 422;
       return { errors: { username: ["username not found"] } };
     }
 
@@ -388,6 +401,7 @@ class UserController {
     });
 
     if (!currentUser) {
+      response.statusCode = 403;
       return { errors: { username: ["username not found"] } };
     }
 

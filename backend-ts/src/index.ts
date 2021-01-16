@@ -40,26 +40,6 @@ createConnection()
     // start express server
     app.listen(3000);
 
-    // const user = connection.manager.create(User, {
-    //   email: "henrique.buss@hotmail.com",
-    //   username: "neovier",
-    //   bio: "functional programming enthusiast",
-    // });
-    // connection.manager.save(user);
-
-    // const article = {
-    //   title: "My first article",
-    //   description: "This is my first article",
-    //   body: "Lorem ipsum",
-    //   tagList: [],
-    //   author: user,
-    //   favorited: [],
-    // };
-
-    // await connection.manager.save(
-    //   connection.manager.create(Article, article)
-    // );
-
     console.log("Express server has started on port 3000.");
   })
   .catch((error) => console.log(error));

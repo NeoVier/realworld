@@ -361,6 +361,51 @@ class UserController {
       },
     };
   }
+
+  async unfollowUser(
+    request: Request,
+    _response: Response,
+    _next: NextFunction
+  ): Promise<ValidationError | Profile> {
+    const usernameToUnfollow = request.params.username;
+    const auth = await this.useAuth(request);
+
+    if (auth.errors) {
+      return { errors: auth.errors };
+    }
+
+    const userToUnfollow = await this.userRepository.findOne({
+      where: { username: usernameToUnfollow },
+    });
+
+    if (!userToUnfollow) {
+      return { errors: { username: ["username not found"] } };
+    }
+
+    const currentUser = await this.userRepository.findOne({
+      where: { username: auth.user!.username },
+      relations: ["follows"],
+    });
+
+    if (!currentUser) {
+      return { errors: { username: ["username not found"] } };
+    }
+
+    currentUser.follows = currentUser.follows.filter(
+      (user) => user.id !== userToUnfollow.id
+    );
+
+    this.userRepository.save(currentUser);
+
+    return {
+      profile: {
+        bio: userToUnfollow.bio,
+        image: userToUnfollow.image,
+        username: userToUnfollow.username,
+        following: false,
+      },
+    };
+  }
 }
 
 export default UserController;

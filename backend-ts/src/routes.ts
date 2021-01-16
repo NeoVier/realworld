@@ -39,6 +39,12 @@ export const Routes = [
     controller: UserController,
     action: "followUser",
   },
+  {
+    method: "delete",
+    route: "/api/profiles/:username/follow",
+    controller: UserController,
+    action: "unfollowUser",
+  },
 
   {
     method: "get",

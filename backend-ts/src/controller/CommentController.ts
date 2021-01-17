@@ -40,7 +40,6 @@ class CommentController {
       return { errors: { slug: ["slug not found"] } };
     }
 
-    console.log(article);
     const newComment = await this.commentRepository.save(
       this.commentRepository.create({
         article,
@@ -50,6 +49,37 @@ class CommentController {
     );
 
     return { comment: newComment };
+  }
+
+  async fromArticle(
+    request: Request,
+    _response: Response,
+    _next: NextFunction
+  ) {
+    const slug = request.params.slug;
+
+    if (!slug) {
+      return { errors: { slug: ["slug not found"] } };
+    }
+
+    const article = await this.articleRepository.findOne({
+      where: {
+        slug,
+      },
+    });
+
+    if (!article) {
+      return { errors: { slug: ["slug not found"] } };
+    }
+
+    const comments = await this.commentRepository.find({
+      where: {
+        article,
+      },
+      relations: ["author"],
+    });
+
+    return { comments: comments };
   }
 }
 

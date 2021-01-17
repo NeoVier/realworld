@@ -84,6 +84,12 @@ export const Routes = [
     controller: CommentController,
     action: "create",
   },
+  {
+    method: "get",
+    route: "/api/articles/:slug/comments",
+    controller: CommentController,
+    action: "fromArticle",
+  },
 
   {
     method: "get",

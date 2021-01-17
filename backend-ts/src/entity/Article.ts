@@ -64,6 +64,7 @@ class Article {
 
   @BeforeInsert()
   @BeforeUpdate()
+  @AfterLoad()
   beforeInsertActions() {
     this.slug = string_to_slug(this.title);
     this.favoritesCount =

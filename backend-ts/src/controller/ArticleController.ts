@@ -151,10 +151,23 @@ class ArticleController {
     const auth = await useAuth(request, response, this.authorRepository);
     const slugToDelete = request.params.slug;
     if (!auth.user) {
+      response.statusCode = 401;
       return { errors: auth.errors };
     }
 
-    await this.articleRepository.delete({ slug: slugToDelete });
+    const author = await this.authorRepository.findOne({
+      where: { username: auth.user.username },
+    });
+
+    if (!author) {
+      response.statusCode = 403;
+      return { errors: { user: ["user doesn't own article"] } };
+    }
+
+    await this.articleRepository.delete({
+      slug: slugToDelete,
+      author,
+    });
     return { status: "ok" };
   }
 }

@@ -51,11 +51,7 @@ class CommentController {
     return { comment: newComment };
   }
 
-  async fromArticle(
-    request: Request,
-    _response: Response,
-    _next: NextFunction
-  ) {
+  async fromArticle(request: Request, response: Response, _next: NextFunction) {
     const slug = request.params.slug;
 
     if (!slug) {
@@ -79,7 +75,35 @@ class CommentController {
       relations: ["author"],
     });
 
-    return { comments: comments };
+    const auth = await useAuth(request, response, this.userRepository);
+    let follows: User[] = [];
+
+    if (auth.user) {
+      const user = await this.userRepository.findOne({
+        where: {
+          username: auth.user.username,
+        },
+        relations: ["follows"],
+      });
+      if (user) {
+        follows = user.follows;
+      }
+    }
+
+    const newComments = comments.map((comment) => {
+      const author = comment.author;
+      return {
+        ...comment,
+        author: {
+          username: author.username,
+          bio: author.bio,
+          image: author.image,
+          following: follows.includes(author),
+        },
+      };
+    });
+
+    return { comments: newComments };
   }
 }
 

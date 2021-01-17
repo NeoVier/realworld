@@ -56,6 +56,7 @@ class ArticleController {
         ? parseInt(request.query.offset)
         : 0;
 
+    // TODO - Fix favorited
     const articles = await this.articleRepository.find({
       order: { updatedAt: "DESC" },
       skip: offset,

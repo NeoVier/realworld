@@ -216,6 +216,54 @@ class ArticleController {
       },
     };
   }
+
+  async unfavorite(request: Request, response: Response, _next: NextFunction) {
+    const auth = await useAuth(request, response, this.authorRepository);
+    const slug = request.params.slug;
+
+    if (!auth.user) {
+      return { errors: auth.errors };
+    }
+
+    const article = await this.articleRepository.findOne({
+      where: { slug },
+      relations: ["tagList", "author", "favorited"],
+    });
+
+    if (!article) {
+      return { errors: { slug: ["slug not found"] } };
+    }
+
+    const user = await this.authorRepository.findOne({
+      where: { username: auth.user.username },
+      relations: ["favorited", "follows"],
+    });
+
+    if (!user) {
+      return { errors: { username: ["username not found"] } };
+    }
+
+    if (article.favorited.includes(user)) {
+      article.favorited = article.favorited.filter(
+        (userFavorited) => userFavorited.id !== user.id
+      );
+      await this.articleRepository.save(article);
+    }
+    const author = article.author;
+
+    return {
+      article: {
+        ...article,
+        author: {
+          username: author.username,
+          bio: author.username,
+          image: author.image,
+          following: user.follows.includes(author),
+        },
+        favorited: article.favorited.includes(user),
+      },
+    };
+  }
 }
 
 export default ArticleController;

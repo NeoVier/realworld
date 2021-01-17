@@ -83,6 +83,12 @@ export const Routes = [
     controller: ArticleController,
     action: "favorite",
   },
+  {
+    method: "delete",
+    route: "/api/articles/:slug/favorite",
+    controller: ArticleController,
+    action: "unfavorite",
+  },
 
   {
     method: "post",

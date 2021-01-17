@@ -1,4 +1,5 @@
 import ArticleController from "./controller/ArticleController";
+import CommentController from "./controller/CommentController";
 import TagController from "./controller/TagController";
 import UserController from "./controller/UserController";
 
@@ -75,6 +76,13 @@ export const Routes = [
     route: "/api/articles/:slug",
     controller: ArticleController,
     action: "delete",
+  },
+
+  {
+    method: "post",
+    route: "/api/articles/:slug/comments",
+    controller: CommentController,
+    action: "create",
   },
 
   {

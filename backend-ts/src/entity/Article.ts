@@ -8,10 +8,12 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { string_to_slug } from "../utils/stringToSlug";
+import Comment from "./Comment";
 import Tag from "./Tag";
 import User from "./User";
 
@@ -48,6 +50,9 @@ class Article {
   @ManyToMany(() => User, (user) => user.favorited, { cascade: true })
   @JoinTable()
   favorited: User[];
+
+  @OneToMany(() => Comment, (comment) => comment.article)
+  comments: Comment[];
 
   favoritesCount: number;
 

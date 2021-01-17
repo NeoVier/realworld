@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
+import Article from "./Article";
 import User from "./User";
 
 @Entity()
@@ -21,6 +22,9 @@ class Comment {
 
   @Column()
   body: string;
+
+  @ManyToOne(() => Article, (article) => article.comments, { cascade: true })
+  article: Article;
 
   @ManyToOne(() => User, (user) => user.comments)
   author: User;

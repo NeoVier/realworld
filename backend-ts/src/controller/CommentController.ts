@@ -105,6 +105,50 @@ class CommentController {
 
     return { comments: newComments };
   }
+
+  async delete(request: Request, response: Response, _next: NextFunction) {
+    const auth = await useAuth(request, response, this.userRepository);
+
+    if (!auth.user) {
+      response.statusCode = 401;
+      return { errors: auth.errors };
+    }
+
+    const slug = request.params.slug;
+    const id = request.params.id;
+
+    const comment = await this.commentRepository.findOne(id, {
+      relations: ["author", "article"],
+    });
+
+    if (!comment) {
+      return { errors: { comment: ["comment not found"] } };
+    }
+    const currentUser = await this.userRepository.findOne({
+      where: { username: auth.user.username },
+    });
+
+    if (!currentUser) {
+      return { errors: { username: ["username not found"] } };
+    }
+
+    const article = await this.articleRepository.findOne({
+      where: { slug },
+    });
+
+    if (!article) {
+      return { errors: { slug: ["slug not found"] } };
+    }
+
+    if (
+      comment.author.id === currentUser.id &&
+      comment.article.id === article.id
+    ) {
+      await this.commentRepository.delete(comment.id);
+    }
+
+    return { status: "ok" };
+  }
 }
 
 export default CommentController;

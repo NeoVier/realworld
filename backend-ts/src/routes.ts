@@ -90,6 +90,12 @@ export const Routes = [
     controller: CommentController,
     action: "fromArticle",
   },
+  {
+    method: "delete",
+    route: "/api/articles/:slug/comments/:id",
+    controller: CommentController,
+    action: "delete",
+  },
 
   {
     method: "get",

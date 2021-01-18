@@ -1,13 +1,14 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Browser
 import Browser.Events
 import Browser.Navigation as Nav
 import Element exposing (Element)
-import Html exposing (Html)
-import Page.About as PAbout
-import Page.Home as PHome
-import Page.NotFound as PNotFound
+import Html
+import Layout
+import Page.About
+import Page.Home
+import Page.NotFound
 import Route exposing (Route)
 import Url
 
@@ -17,8 +18,8 @@ import Url
 
 
 type Page
-    = Home PHome.Model
-    | About PAbout.Model
+    = Home Page.Home.Model
+    | About Page.About.Model
     | NotFound
 
 
@@ -51,8 +52,8 @@ type Msg
     = ChangedUrl Url.Url
     | RequestedUrl Browser.UrlRequest
     | Resized Dimmensions
-    | GotHomeMsg PHome.Msg
-    | GotAboutMsg PAbout.Msg
+    | GotHomeMsg Page.Home.Msg
+    | GotAboutMsg Page.About.Msg
 
 
 
@@ -93,11 +94,11 @@ update msg model =
             ( { model | device = Element.classifyDevice dimm }, Cmd.none )
 
         ( GotHomeMsg subMsg, Home subModel ) ->
-            PHome.update subMsg subModel
+            Page.Home.update subMsg subModel
                 |> updateWith model Home GotHomeMsg
 
         ( GotAboutMsg subMsg, About subModel ) ->
-            PAbout.update subMsg subModel
+            Page.About.update subMsg subModel
                 |> updateWith model About GotAboutMsg
 
         -- Invalid messages
@@ -122,18 +123,36 @@ updateWith model toPage toMsg ( subModel, subCmd ) =
 -- VIEW
 
 
-viewPage : Browser.Document subMsg -> (subMsg -> Msg) -> Browser.Document Msg
-viewPage page toMsg =
-    { title = page.title
-    , body =
-        List.map (Html.map toMsg) page.body
+viewPage :
+    Maybe Route
+    -> { title : String, body : List (Element subMsg) }
+    -> (subMsg -> Msg)
+    -> Browser.Document Msg
+viewPage activeRoute page toMsg =
+    let
+        layoutView =
+            Layout.view
+                activeRoute
+                { title = page.title
+                , body = page.body
+                }
+    in
+    { title = layoutView.title
+    , body = [ layoutView.body |> Html.map toMsg ]
     }
 
 
-viewStaticPage : { title : String, body : Element msg } -> Browser.Document msg
-viewStaticPage { title, body } =
-    { title = title
-    , body = [ Element.layout [] body ]
+viewStaticPage :
+    Maybe Route
+    -> { title : String, body : List (Element msg) }
+    -> Browser.Document msg
+viewStaticPage activeRoute page =
+    let
+        layoutView =
+            Layout.view activeRoute { title = page.title, body = page.body }
+    in
+    { title = layoutView.title
+    , body = [ layoutView.body ]
     }
 
 
@@ -141,13 +160,13 @@ view : Model -> Browser.Document Msg
 view model =
     case model.currPage of
         NotFound ->
-            viewStaticPage { title = "Not Found", body = PNotFound.view }
+            viewStaticPage Nothing { title = "Not Found", body = [ Page.NotFound.view ] }
 
         Home subModel ->
-            viewPage (PHome.view subModel model.device) GotHomeMsg
+            viewPage (Just Route.Home) (Page.Home.view subModel model.device) GotHomeMsg
 
         About subModel ->
-            viewPage (PAbout.view subModel) GotAboutMsg
+            viewPage (Just Route.About) (Page.About.view subModel) GotAboutMsg
 
 
 
@@ -155,7 +174,7 @@ view model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Browser.Events.onResize (\w h -> Resized { width = w, height = h })
 
 
@@ -170,9 +189,9 @@ changeRouteTo maybeRoute model =
             ( { model | currPage = NotFound }, Cmd.none )
 
         Just Route.Home ->
-            PHome.init
+            Page.Home.init
                 |> updateWith model Home GotHomeMsg
 
         Just Route.About ->
-            PAbout.init
+            Page.About.init
                 |> updateWith model About GotAboutMsg

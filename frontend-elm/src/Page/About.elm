@@ -1,22 +1,28 @@
 module Page.About exposing (Model, Msg(..), init, update, view)
 
-import Browser
 import Element exposing (Element)
-import Element.Input as Input
-import Route
+import Element.Font
+import Http
+import Json.Decode exposing (Decoder)
 
 
 
 -- MODEL
 
 
-type alias Model =
-    { counter : Int }
+type alias Fact =
+    { fact : String, source : String }
+
+
+type Model
+    = Loading
+    | WithFact Fact
+    | Errored
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { counter = 0 }, Cmd.none )
+    ( Loading, fetchFact )
 
 
 
@@ -24,8 +30,7 @@ init =
 
 
 type Msg
-    = Increment
-    | Decrement
+    = GotFact (Result Http.Error Fact)
 
 
 
@@ -33,32 +38,96 @@ type Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg _ =
     case msg of
-        Increment ->
-            ( { model | counter = model.counter + 1 }, Cmd.none )
+        GotFact (Ok fact) ->
+            ( WithFact fact, Cmd.none )
 
-        Decrement ->
-            ( { model | counter = model.counter - 1 }, Cmd.none )
+        GotFact (Err _) ->
+            ( Errored, Cmd.none )
 
 
 
 -- VIEW
 
 
-view : Model -> Browser.Document Msg
+view : Model -> { title : String, body : List (Element Msg) }
 view model =
     { title = "About"
     , body =
-        [ Element.layout [] <|
-            Element.column []
-                [ Element.text "about page"
-                , Element.row []
-                    [ Input.button [] { onPress = Just Decrement, label = Element.text "-" }
-                    , Element.text <| String.fromInt model.counter
-                    , Input.button [] { onPress = Just Increment, label = Element.text "+" }
-                    ]
-                , Route.linkToRoute [] { route = Route.Home, label = Element.text "Go to home" }
-                ]
+        [ Element.paragraph
+            [ Element.Font.bold
+            , Element.Font.size 20
+            ]
+            [ Element.text "This is just an about page" ]
+        , Element.paragraph [] [ Element.text "There isn't much here, it's just supposed to demonstrate routing, so here's a random fact to reward you:" ]
+        , case model of
+            Loading ->
+                Element.el [ Element.centerX, Element.paddingXY 0 20 ] <|
+                    Element.text "Loading"
+
+            WithFact fact ->
+                viewFact fact
+
+            Errored ->
+                Element.el [ Element.centerX, Element.paddingXY 0 20 ] <|
+                    Element.text "Something went wrong"
         ]
     }
+
+
+factsAPIUrl : String
+factsAPIUrl =
+    "https://uselessfacts.jsph.pl"
+
+
+viewFact : Fact -> Element msg
+viewFact fact =
+    Element.column
+        [ Element.spacing 10
+        , Element.width Element.fill
+        , Element.paddingXY 20 0
+        ]
+        [ Element.paragraph [ Element.Font.center, Element.padding 20 ]
+            [ Element.el [] <|
+                Element.text <|
+                    "\""
+                        ++ fact.fact
+                        ++ "\""
+            ]
+        , Element.paragraph []
+            [ Element.text "Source: "
+            , Element.newTabLink []
+                { url = fact.source
+                , label =
+                    Element.el [ Element.Font.underline ] <| Element.text fact.source
+                }
+            ]
+        , Element.paragraph []
+            [ Element.text "Powered by "
+            , Element.newTabLink [ Element.Font.underline ]
+                { url = factsAPIUrl
+                , label = Element.text factsAPIUrl
+                }
+            ]
+        ]
+
+
+
+-- HTTP
+
+
+fetchFact : Cmd Msg
+fetchFact =
+    Http.get
+        { url = factsAPIUrl ++ "/random.json?language=en"
+        , expect =
+            Http.expectJson GotFact decodeFact
+        }
+
+
+decodeFact : Decoder Fact
+decodeFact =
+    Json.Decode.map2 Fact
+        (Json.Decode.field "text" Json.Decode.string)
+        (Json.Decode.field "source_url" Json.Decode.string)

@@ -2,8 +2,8 @@ module Page.Home exposing (Model, Msg(..), init, update, view)
 
 import Element exposing (Element)
 import Element.Background
-import Element.Border
 import Element.Font
+import Html.Attributes
 import Palette
 
 
@@ -56,16 +56,11 @@ banner : Element Msg
 banner =
     Element.column
         [ Element.width Element.fill
-        , Element.paddingXY 0 <| Palette.rem 2
+        , Element.paddingEach { left = 0, right = 0, top = 35, bottom = 39 }
         , Element.spacing 16
         , Element.Background.color Palette.color
         , Element.Font.color <| Element.rgb 1 1 1
-        , Element.Border.innerShadow
-            { offset = ( 0, 8 )
-            , size = -8
-            , blur = 8
-            , color = Element.rgba 0 0 0 0.3
-            }
+        , Element.htmlAttribute <| Html.Attributes.class "banner-shadow"
         ]
         [ Element.el
             [ Element.centerX

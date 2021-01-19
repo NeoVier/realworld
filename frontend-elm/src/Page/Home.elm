@@ -57,6 +57,7 @@ init =
 type Msg
     = GotArticles (Result Http.Error (List Article))
     | GotTimeZone Time.Zone
+    | Favorited Article
 
 
 
@@ -74,6 +75,37 @@ update msg model =
 
         GotTimeZone newZone ->
             ( { model | timeZone = newZone }, Cmd.none )
+
+        Favorited favoritedArticle ->
+            case model.feed of
+                WithData articles ->
+                    ( { model
+                        | feed =
+                            List.map
+                                (\article ->
+                                    if article == favoritedArticle then
+                                        { article
+                                            | favorited = not article.favorited
+                                            , favoritesCount =
+                                                if article.favorited then
+                                                    article.favoritesCount - 1
+
+                                                else
+                                                    article.favoritesCount + 1
+                                        }
+
+                                    else
+                                        article
+                                )
+                                articles
+                                |> WithData
+                      }
+                      -- TODO - Add api call
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 
@@ -220,14 +252,16 @@ viewArticleAuthor zone article =
             { favoritesCount = article.favoritesCount
             , favorited = article.favorited
             }
+            (Favorited article)
         ]
 
 
 viewFavoriteButton :
     List (Element.Attribute Msg)
     -> { favoritesCount : Int, favorited : Bool }
+    -> Msg
     -> Element Msg
-viewFavoriteButton attributes { favoritesCount, favorited } =
+viewFavoriteButton attributes { favoritesCount, favorited } onFavorited =
     Element.Input.button
         (attributes
             ++ [ Element.paddingXY (Palette.rem 0.5) (Palette.rem 0.25)
@@ -258,7 +292,7 @@ viewFavoriteButton attributes { favoritesCount, favorited } =
                , Element.htmlAttribute <| Html.Attributes.class "icon"
                ]
         )
-        { onPress = Nothing
+        { onPress = Just onFavorited
         , label =
             Element.row
                 [ Element.spacing 5

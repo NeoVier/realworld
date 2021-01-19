@@ -1,4 +1,6 @@
-module Slug exposing (Slug, fromString, toString)
+module Slug exposing (Slug, decoder, fromString, toString)
+
+import Json.Decode exposing (Decoder)
 
 
 type Slug
@@ -13,3 +15,8 @@ toString (Slug slug) =
 fromString : String -> Slug
 fromString =
     Slug
+
+
+decoder : Decoder Slug
+decoder =
+    Json.Decode.map Slug Json.Decode.string

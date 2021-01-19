@@ -19,7 +19,7 @@ init : Maybe Slug -> ( Model, Cmd Msg )
 init maybeSlug =
     case maybeSlug of
         Nothing ->
-            ( WithArticle {}, Cmd.none )
+            ( Loading, Cmd.none )
 
         Just _ ->
             -- TODO

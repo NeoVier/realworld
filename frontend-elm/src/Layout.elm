@@ -15,7 +15,7 @@ view :
     -> { title : String, body : List (Element msg) }
     -> { title : String, body : Html msg }
 view activeRoute document =
-    { title = document.title ++ " — Conduit"
+    { title = document.title ++ " - Conduit"
     , body =
         Element.column
             [ Element.width Element.fill

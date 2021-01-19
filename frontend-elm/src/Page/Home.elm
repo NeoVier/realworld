@@ -9,7 +9,6 @@ import Element.Font
 import Element.Input
 import Html
 import Html.Attributes
-import Html.Events
 import Http
 import Ionicon
 import Palette
@@ -70,11 +69,7 @@ update msg model =
         GotArticles (Ok articles) ->
             ( { model | feed = WithData articles }, Cmd.none )
 
-        GotArticles err ->
-            let
-                _ =
-                    Debug.log "Error" err
-            in
+        GotArticles _ ->
             ( { model | feed = WithError "Something went wrong" }, Cmd.none )
 
         GotTimeZone newZone ->
@@ -127,13 +122,14 @@ banner =
             ]
           <|
             Element.text "conduit"
-        , Element.el
+        , Element.paragraph
             [ Element.centerX
+            , Element.Font.center
             , Element.Font.light
             , Element.Font.size <| Palette.rem 1.5
             ]
-          <|
-            Element.text "A place to share your knowledge."
+            [ Element.text "A place to share your knowledge."
+            ]
         ]
 
 

@@ -6,11 +6,18 @@ import Browser.Navigation as Nav
 import Element exposing (Element)
 import Html
 import Layout
-import Page.About
+import Page.Article
+import Page.Editor
 import Page.Home
+import Page.Login
 import Page.NotFound
+import Page.Profile
+import Page.Register
+import Page.Settings
 import Route exposing (Route)
+import Slug
 import Url
+import User
 
 
 
@@ -19,7 +26,12 @@ import Url
 
 type Page
     = Home Page.Home.Model
-    | About Page.About.Model
+    | Login Page.Login.Model
+    | Register Page.Register.Model
+    | Settings Page.Settings.Model
+    | Editor Page.Editor.Model
+    | Article Page.Article.Model
+    | Profile Page.Profile.Model
     | NotFound
 
 
@@ -53,7 +65,12 @@ type Msg
     | RequestedUrl Browser.UrlRequest
     | Resized Dimmensions
     | GotHomeMsg Page.Home.Msg
-    | GotAboutMsg Page.About.Msg
+    | GotLoginMsg Page.Login.Msg
+    | GotRegisterMsg Page.Register.Msg
+    | GotSettingsMsg Page.Settings.Msg
+    | GotEditorMsg Page.Editor.Msg
+    | GotArticleMsg Page.Article.Msg
+    | GotProfileMsg Page.Profile.Msg
 
 
 
@@ -97,15 +114,50 @@ update msg model =
             Page.Home.update subMsg subModel
                 |> updateWith model Home GotHomeMsg
 
-        ( GotAboutMsg subMsg, About subModel ) ->
-            Page.About.update subMsg subModel
-                |> updateWith model About GotAboutMsg
+        ( GotLoginMsg subMsg, Login subModel ) ->
+            Page.Login.update subMsg subModel
+                |> updateWith model Login GotLoginMsg
+
+        ( GotRegisterMsg subMsg, Register subModel ) ->
+            Page.Register.update subMsg subModel
+                |> updateWith model Register GotRegisterMsg
+
+        ( GotSettingsMsg subMsg, Settings subModel ) ->
+            Page.Settings.update subMsg subModel
+                |> updateWith model Settings GotSettingsMsg
+
+        ( GotEditorMsg subMsg, Editor subModel ) ->
+            Page.Editor.update subMsg subModel
+                |> updateWith model Editor GotEditorMsg
+
+        ( GotArticleMsg subMsg, Article subModel ) ->
+            Page.Article.update subMsg subModel
+                |> updateWith model Article GotArticleMsg
+
+        ( GotProfileMsg subMsg, Profile subModel ) ->
+            Page.Profile.update subMsg subModel
+                |> updateWith model Profile GotProfileMsg
 
         -- Invalid messages
         ( GotHomeMsg _, _ ) ->
             ( model, Cmd.none )
 
-        ( GotAboutMsg _, _ ) ->
+        ( GotLoginMsg _, _ ) ->
+            ( model, Cmd.none )
+
+        ( GotRegisterMsg _, _ ) ->
+            ( model, Cmd.none )
+
+        ( GotSettingsMsg _, _ ) ->
+            ( model, Cmd.none )
+
+        ( GotEditorMsg _, _ ) ->
+            ( model, Cmd.none )
+
+        ( GotArticleMsg _, _ ) ->
+            ( model, Cmd.none )
+
+        ( GotProfileMsg _, _ ) ->
             ( model, Cmd.none )
 
 
@@ -163,10 +215,37 @@ view model =
             viewStaticPage Nothing { title = "Not Found", body = [ Page.NotFound.view ] }
 
         Home subModel ->
-            viewPage (Just Route.Home) (Page.Home.view subModel model.device) GotHomeMsg
+            viewPage (Just Route.Home) (Page.Home.view subModel) GotHomeMsg
 
-        About subModel ->
-            viewPage (Just Route.About) (Page.About.view subModel) GotAboutMsg
+        Login subModel ->
+            viewPage (Just Route.Login) (Page.Login.view subModel) GotLoginMsg
+
+        Register subModel ->
+            viewPage (Just Route.Register) (Page.Register.view subModel) GotRegisterMsg
+
+        Settings subModel ->
+            viewPage (Just Route.Settings) (Page.Settings.view subModel) GotSettingsMsg
+
+        Editor subModel ->
+            -- TODO ?
+            viewPage (Just (Route.Editor Nothing))
+                (Page.Editor.view subModel)
+                GotEditorMsg
+
+        Article subModel ->
+            viewPage (Just (Route.Article <| Slug.fromString ""))
+                (Page.Article.view subModel)
+                GotArticleMsg
+
+        Profile subModel ->
+            viewPage
+                (Just
+                    (Route.Profile
+                        { favorites = False, username = User.fromString "" }
+                    )
+                )
+                (Page.Profile.view subModel)
+                GotProfileMsg
 
 
 
@@ -192,6 +271,26 @@ changeRouteTo maybeRoute model =
             Page.Home.init
                 |> updateWith model Home GotHomeMsg
 
-        Just Route.About ->
-            Page.About.init
-                |> updateWith model About GotAboutMsg
+        Just Route.Login ->
+            Page.Login.init
+                |> updateWith model Login GotLoginMsg
+
+        Just Route.Register ->
+            Page.Register.init
+                |> updateWith model Register GotRegisterMsg
+
+        Just Route.Settings ->
+            Page.Settings.init
+                |> updateWith model Settings GotSettingsMsg
+
+        Just (Route.Editor maybeSlug) ->
+            Page.Editor.init maybeSlug
+                |> updateWith model Editor GotEditorMsg
+
+        Just (Route.Article slug) ->
+            Page.Article.init slug
+                |> updateWith model Article GotArticleMsg
+
+        Just (Route.Profile options) ->
+            Page.Profile.init options
+                |> updateWith model Profile GotProfileMsg

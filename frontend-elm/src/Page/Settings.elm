@@ -1,4 +1,4 @@
-module Page.Home exposing (Model, Msg(..), init, update, view)
+module Page.Settings exposing (Model, Msg(..), init, update, view)
 
 import Element exposing (Element)
 
@@ -37,12 +37,10 @@ update msg model =
 
 
 -- VIEW
--- TODO
 
 
 view : Model -> { title : String, body : List (Element Msg) }
 view _ =
-    { title = "Home"
-    , body =
-        []
+    { title = "Settings"
+    , body = []
     }

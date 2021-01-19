@@ -6,6 +6,7 @@ import Element.Font
 import Element.Region
 import Html exposing (Html)
 import Route exposing (Route)
+import User
 
 
 maxWidth : Element.Length
@@ -76,7 +77,7 @@ headerLogo =
 
 headerItems : Maybe Route -> Element msg
 headerItems activeRoute =
-    List.map (headerItem activeRoute) [ Route.Home, Route.About ]
+    List.map (headerItem activeRoute) [ Route.Home ]
         |> Element.row [ Element.alignRight, Element.spacing 20 ]
 
 
@@ -110,8 +111,23 @@ routeTitle route =
         Route.Home ->
             "Home"
 
-        Route.About ->
-            "About"
+        Route.Login ->
+            "Sign in"
+
+        Route.Register ->
+            "Sign up"
+
+        Route.Settings ->
+            "Settings"
+
+        Route.Editor _ ->
+            "New Article"
+
+        Route.Article _ ->
+            "View Article"
+
+        Route.Profile { username } ->
+            User.toString username
 
 
 

@@ -65,6 +65,7 @@ type Msg
     | GotTimeZone Time.Zone
     | Favorited Article
     | ChangedFeed Feed
+    | ClickedTag Tag
 
 
 
@@ -123,6 +124,11 @@ update msg model maybeUser =
         ChangedFeed newFeed ->
             ( { model | feedType = newFeed, feed = Loading }
             , Api.fetchFeed newFeed maybeUser GotArticles
+            )
+
+        ClickedTag tag ->
+            ( { model | feedType = Feed.Tag tag, feed = Loading }
+            , Api.fetchFeed (Feed.Tag tag) maybeUser GotArticles
             )
 
 
@@ -519,7 +525,7 @@ viewTag tag =
             [ Element.Background.color <| Element.rgb255 0x68 0x70 0x77
             ]
         ]
-        { onPress = Nothing
+        { onPress = Just <| ClickedTag tag
         , label =
             Tag.toString tag
                 |> Element.text

@@ -7,7 +7,7 @@ import Element.Region
 import Html exposing (Html)
 import Palette
 import Route exposing (Route)
-import User
+import User.Username as Username
 
 
 view :
@@ -130,7 +130,7 @@ routeTitle route =
             "View Article"
 
         Route.Profile { username } ->
-            User.toString username
+            Username.toString username
 
 
 

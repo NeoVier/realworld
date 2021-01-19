@@ -1,7 +1,7 @@
 module Page.Profile exposing (Model, Msg(..), init, update, view)
 
 import Element exposing (Element)
-import User exposing (Username)
+import User.Username exposing (Username)
 
 
 

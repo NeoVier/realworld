@@ -4,7 +4,7 @@ import Element exposing (Element)
 import Slug exposing (Slug(..))
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
-import User exposing (Username)
+import User.Username as Username exposing (Username)
 
 
 
@@ -33,12 +33,12 @@ parser =
         , Parser.map (Article << Slug.fromString) (Parser.s "article" </> Parser.string)
         , Parser.map
             (\username ->
-                Profile { favorites = False, username = User.fromString username }
+                Profile { favorites = False, username = Username.fromString username }
             )
             (Parser.s "profile" </> Parser.string)
         , Parser.map
             (\username ->
-                Profile { favorites = True, username = User.fromString username }
+                Profile { favorites = True, username = Username.fromString username }
             )
             (Parser.s "profile" </> Parser.string </> Parser.s "favorites")
         ]
@@ -97,7 +97,7 @@ routeToPieces route =
             [ "article", Slug.toString slug ]
 
         Profile { favorites, username } ->
-            [ "profile", User.toString username ]
+            [ "profile", Username.toString username ]
                 ++ (if favorites then
                         [ "favorites" ]
 

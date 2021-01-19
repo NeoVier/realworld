@@ -17,7 +17,7 @@ import Tag exposing (Tag)
 import Task
 import Time
 import TimeFormat
-import User
+import User.Username as Username
 
 
 
@@ -237,7 +237,7 @@ viewArticleAuthor zone article =
                         { favorites = False
                         , username = article.author.username
                         }
-                , label = Element.text <| User.toString article.author.username
+                , label = Element.text <| Username.toString article.author.username
                 }
             , Element.el
                 [ Element.Font.color <| Element.rgb255 0xBB 0xBB 0xBB

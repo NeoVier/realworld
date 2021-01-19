@@ -1,5 +1,6 @@
 module Page.Login exposing (Model, Msg(..), init, update, view)
 
+import Api
 import Element exposing (Element)
 import Element.Background
 import Element.Border
@@ -7,8 +8,10 @@ import Element.Font
 import Element.Input
 import Element.Region
 import Form
+import Http
 import Palette
 import Route
+import User exposing (User)
 
 
 
@@ -42,6 +45,7 @@ type Msg
     = ChangedEmail String
     | ChangedPassword String
     | ClickedSubmit
+    | LoggedIn (Result Http.Error User)
 
 
 
@@ -65,10 +69,29 @@ update msg model =
             in
             if List.isEmpty errors then
                 -- TODO - Use API
-                ( { model | submitting = True, errors = [] }, Cmd.none )
+                ( { model | submitting = True, errors = [] }
+                , Api.login { email = model.email, password = model.password } LoggedIn
+                )
 
             else
-                ( { model | errors = errors }, Cmd.none )
+                ( { model | errors = errors }
+                , Cmd.none
+                )
+
+        LoggedIn (Ok user) ->
+            ( model, Cmd.none )
+
+        LoggedIn (Err error) ->
+            let
+                error2 =
+                    Debug.log "error" error
+            in
+            ( { model
+                | errors = [ "couldn't log in" ]
+                , submitting = False
+              }
+            , Cmd.none
+            )
 
 
 

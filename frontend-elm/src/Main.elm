@@ -17,7 +17,7 @@ import Page.Settings
 import Route exposing (Route)
 import Slug
 import Url
-import User
+import User.Username as Username
 
 
 
@@ -233,15 +233,17 @@ view model =
                 GotEditorMsg
 
         Article subModel ->
+            -- TODO ?
             viewPage (Just (Route.Article <| Slug.fromString ""))
                 (Page.Article.view subModel)
                 GotArticleMsg
 
         Profile subModel ->
+            -- TODO ?
             viewPage
                 (Just
                     (Route.Profile
-                        { favorites = False, username = User.fromString "" }
+                        { favorites = False, username = Username.fromString "" }
                     )
                 )
                 (Page.Profile.view subModel)

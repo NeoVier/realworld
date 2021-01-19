@@ -1,5 +1,6 @@
-module Route exposing (Route(..), fromUrl, linkToRoute)
+module Route exposing (Route(..), fromUrl, linkToRoute, replaceUrl)
 
+import Browser.Navigation as Nav
 import Element exposing (Element)
 import Slug exposing (Slug(..))
 import Url exposing (Url)
@@ -59,6 +60,11 @@ linkToRoute :
     -> Element msg
 linkToRoute attrs { route, label } =
     Element.link attrs { url = toString route, label = label }
+
+
+replaceUrl : Nav.Key -> Route -> Cmd msg
+replaceUrl key route =
+    Nav.replaceUrl key (toString route)
 
 
 

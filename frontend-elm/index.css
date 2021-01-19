@@ -23,9 +23,8 @@
     opacity: 0.6;
 }
 
-*:focus-within {
+.no-focus-border:focus-within * {
     box-shadow: none !important;
-    border-color: rgb(126, 181, 223) !important;
 }
 
 input:invalid {

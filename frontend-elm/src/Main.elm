@@ -117,15 +117,15 @@ update msg model =
             ( { model | device = Element.classifyDevice dimm }, Cmd.none )
 
         ( GotHomeMsg subMsg, Home subModel ) ->
-            Page.Home.update subMsg subModel
+            Page.Home.update subMsg subModel model.user
                 |> updateWith model Home GotHomeMsg
 
         ( GotLoginMsg ((Page.Login.SendToSharedModel user) as subMsg), Login subModel ) ->
-            Page.Login.update subMsg subModel
+            Page.Login.update subMsg subModel model.navKey
                 |> updateWith { model | user = Just user } Login GotLoginMsg
 
         ( GotLoginMsg subMsg, Login subModel ) ->
-            Page.Login.update subMsg subModel
+            Page.Login.update subMsg subModel model.navKey
                 |> updateWith model Login GotLoginMsg
 
         ( GotRegisterMsg subMsg, Register subModel ) ->
@@ -227,7 +227,10 @@ view model =
             viewStaticPage Nothing model.user { title = "Not Found", body = [ Page.NotFound.view ] }
 
         Home subModel ->
-            viewPage (Just Route.Home) model.user (Page.Home.view subModel) GotHomeMsg
+            viewPage (Just Route.Home)
+                model.user
+                (Page.Home.view subModel model.device model.user)
+                GotHomeMsg
 
         Login subModel ->
             viewPage (Just Route.Login) model.user (Page.Login.view subModel) GotLoginMsg
@@ -290,7 +293,7 @@ changeRouteTo maybeRoute model =
             ( { model | currPage = NotFound }, Cmd.none )
 
         Just Route.Home ->
-            Page.Home.init
+            Page.Home.init model.user
                 |> updateWith model Home GotHomeMsg
 
         Just Route.Login ->

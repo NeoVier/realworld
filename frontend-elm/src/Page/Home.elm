@@ -7,6 +7,7 @@ import Element.Background
 import Element.Border
 import Element.Font
 import Element.Input
+import Feed exposing (Feed)
 import Html
 import Html.Attributes
 import Http
@@ -17,6 +18,7 @@ import Tag exposing (Tag)
 import Task
 import Time
 import TimeFormat
+import User exposing (User)
 import User.Username as Username
 
 
@@ -34,17 +36,20 @@ type alias Model =
     { timeZone : Time.Zone
     , feed : RemoteData (List Article)
     , tags : RemoteData (List Tag)
+    , feedType : Feed
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Maybe User -> ( Model, Cmd Msg )
+init maybeUser =
     ( { timeZone = Time.utc
       , feed = Loading
       , tags = Loading
+      , feedType = Feed.Global
       }
     , Cmd.batch
-        [ Api.listArticles GotArticles
+        [ Api.fetchFeed Feed.Global maybeUser GotArticles
+        , Api.listTags GotTags
         , Task.perform GotTimeZone Time.here
         ]
     )
@@ -56,22 +61,30 @@ init =
 
 type Msg
     = GotArticles (Result Http.Error (List Article))
+    | GotTags (Result Http.Error (List Tag))
     | GotTimeZone Time.Zone
     | Favorited Article
+    | ChangedFeed Feed
 
 
 
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Msg -> Model -> Maybe User -> ( Model, Cmd Msg )
+update msg model maybeUser =
     case msg of
         GotArticles (Ok articles) ->
             ( { model | feed = WithData articles }, Cmd.none )
 
-        GotArticles _ ->
+        GotArticles (Err _) ->
             ( { model | feed = WithError "Something went wrong" }, Cmd.none )
+
+        GotTags (Ok tags) ->
+            ( { model | tags = WithData tags }, Cmd.none )
+
+        GotTags (Err _) ->
+            ( { model | tags = WithError "Something went wrong" }, Cmd.none )
 
         GotTimeZone newZone ->
             ( { model | timeZone = newZone }, Cmd.none )
@@ -107,28 +120,76 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        ChangedFeed newFeed ->
+            ( { model | feedType = newFeed, feed = Loading }
+            , Api.fetchFeed newFeed maybeUser GotArticles
+            )
+
 
 
 -- VIEW
--- TODO
 
 
-view : Model -> { title : String, body : List (Element Msg) }
-view model =
+view : Model -> Element.Device -> Maybe User -> { title : String, body : List (Element Msg) }
+view model device maybeUser =
+    let
+        hideTags =
+            case ( device.class, device.orientation ) of
+                ( Element.Tablet, Element.Portrait ) ->
+                    True
+
+                ( Element.Phone, _ ) ->
+                    True
+
+                _ ->
+                    False
+    in
     { title = "Home"
     , body =
         [ banner
-        , case model.feed of
-            Loading ->
-                Element.text "Loading"
+        , Element.row
+            [ Element.width Palette.maxWidth
+            , Element.centerX
+            , Element.paddingXY Palette.minPaddingX 0
+            , Element.spacing 50
+            ]
+            [ Element.column
+                [ Element.width <| Element.fillPortion 3
+                , Element.spacing 30
+                , Element.alignTop
+                ]
+                [ viewFeed maybeUser model.feedType
+                , case model.feed of
+                    Loading ->
+                        Element.text "Loading"
 
-            WithData articles ->
-                viewArticles model.timeZone articles
+                    WithData articles ->
+                        viewArticles model.timeZone articles
 
-            WithError err ->
-                Element.text err
+                    WithError err ->
+                        Element.text err
+                ]
+            , if hideTags then
+                Element.none
+
+              else
+                Element.el [ Element.alignTop, Element.width <| Element.fillPortion 1 ] <|
+                    case model.tags of
+                        Loading ->
+                            Element.text "Loading"
+
+                        WithData tags ->
+                            viewTagList tags
+
+                        WithError err ->
+                            Element.text err
+            ]
         ]
     }
+
+
+
+-- BANNER
 
 
 banner : Element Msg
@@ -165,6 +226,75 @@ banner =
         ]
 
 
+
+-- FEED
+
+
+viewFeed : Maybe User -> Feed -> Element Msg
+viewFeed maybeUser currentFeed =
+    let
+        feeds =
+            ((case maybeUser of
+                Just user ->
+                    [ Feed.Personal user ]
+
+                Nothing ->
+                    []
+             )
+                ++ Feed.Global
+                :: (case currentFeed of
+                        Feed.Tag _ ->
+                            [ currentFeed ]
+
+                        _ ->
+                            []
+                   )
+            )
+                |> List.map (\f -> ( Feed.toString f, f == currentFeed ))
+    in
+    List.map
+        (\( feedName, isActive ) ->
+            Element.Input.button
+                [ Element.paddingXY 8 16
+                , Element.Font.color <|
+                    if isActive then
+                        Palette.color
+
+                    else
+                        Element.rgb255 0xAA 0xAA 0xAA
+                , Element.Border.widthEach { bottom = 2, top = 0, right = 0, left = 0 }
+                , Element.Border.color <|
+                    if isActive then
+                        Palette.color
+
+                    else
+                        Element.rgba 0 0 0 0
+                , Element.mouseOver <|
+                    if isActive then
+                        []
+
+                    else
+                        [ Element.Font.color <| Element.rgb255 0x37 0x3A 0x3C ]
+                ]
+                { onPress = Just <| ChangedFeed <| Feed.fromString feedName maybeUser
+                , label = Element.text feedName
+                }
+        )
+        feeds
+        |> Element.row
+            [ Element.width Element.fill
+            , Element.paddingXY 8 0
+            , Element.spacing 30
+            , Element.Border.color <| Element.rgba 0 0 0 0.1
+            , Element.Border.widthEach { bottom = 1, left = 0, right = 0, top = 0 }
+            , Element.htmlAttribute <| Html.Attributes.class "no-focus-border"
+            ]
+
+
+
+-- ARTICLE
+
+
 viewArticles : Time.Zone -> List Article -> Element Msg
 viewArticles zone articles =
     List.map (viewArticle zone) articles
@@ -177,15 +307,9 @@ viewArticles zone articles =
                 Element.none
             )
         |> Element.column
-            [ Element.width Palette.maxWidth
-            , Element.centerX
-            , Element.paddingXY Palette.minPaddingX 0
+            [ Element.width Element.fill
             , Element.spacing 25
             ]
-
-
-
--- ARTICLE
 
 
 viewArticle : Time.Zone -> Article -> Element Msg
@@ -344,13 +468,13 @@ viewArticleFooter article =
             ]
           <|
             Element.text "Read more..."
-        , List.map viewTag article.tagList
+        , List.map viewArticleTag article.tagList
             |> Element.wrappedRow [ Element.alignRight ]
         ]
 
 
-viewTag : Tag -> Element Msg
-viewTag tag =
+viewArticleTag : Tag -> Element Msg
+viewArticleTag tag =
     Element.el
         [ Element.paddingXY (Palette.rem 0.6) (Palette.rem 0.2)
         , Element.Font.light
@@ -363,3 +487,40 @@ viewTag tag =
     <|
         Element.text <|
             Tag.toString tag
+
+
+
+-- TAGS
+
+
+viewTagList : List Tag -> Element Msg
+viewTagList tags =
+    Element.column
+        [ Element.width Element.fill
+        , Element.padding 10
+        , Element.spacing 10
+        , Element.Background.color <| Element.rgb255 0xF3 0xF3 0xF3
+        ]
+        [ Element.el [ Element.Font.color <| Element.rgb255 0x37 0x3A 0x3C ] <|
+            Element.text "Popular Tags"
+        , Element.wrappedRow [ Element.spacing 3 ] <| List.map viewTag tags
+        ]
+
+
+viewTag : Tag -> Element Msg
+viewTag tag =
+    Element.Input.button
+        [ Element.paddingXY 8 5
+        , Element.Font.color <| Element.rgb 1 1 1
+        , Element.Font.size <| Palette.rem 0.8
+        , Element.Background.color <| Element.rgb255 0x81 0x8A 0x91
+        , Element.Border.rounded <| Palette.rem 10
+        , Element.mouseOver
+            [ Element.Background.color <| Element.rgb255 0x68 0x70 0x77
+            ]
+        ]
+        { onPress = Nothing
+        , label =
+            Tag.toString tag
+                |> Element.text
+        }

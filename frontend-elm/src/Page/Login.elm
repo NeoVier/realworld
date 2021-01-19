@@ -1,6 +1,7 @@
 module Page.Login exposing (Model, Msg(..), init, update, view)
 
 import Api
+import Browser.Navigation as Nav
 import Element exposing (Element)
 import Element.Background
 import Element.Border
@@ -54,8 +55,8 @@ type Msg
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
+update msg model navKey =
     case msg of
         ChangedEmail newEmail ->
             ( { model | email = newEmail }, Cmd.none )
@@ -91,7 +92,7 @@ update msg model =
             )
 
         SendToSharedModel _ ->
-            ( model, Cmd.none )
+            ( model, Route.replaceUrl navKey Route.Home )
 
 
 

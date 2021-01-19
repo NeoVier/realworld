@@ -15,6 +15,11 @@ maxWidth =
     Element.maximum 1110 Element.fill
 
 
+minPaddingX : Int
+minPaddingX =
+    31
+
+
 view :
     Maybe Route
     -> { title : String, body : List (Element msg) }
@@ -29,7 +34,7 @@ view activeRoute document =
             [ header activeRoute
             , Element.column
                 [ Element.width maxWidth
-                , Element.padding 30
+                , Element.paddingXY minPaddingX 30
                 , Element.spacing 20
                 , Element.centerX
                 , Element.Region.mainContent
@@ -59,7 +64,7 @@ header activeRoute =
     Element.row
         [ Element.width maxWidth
         , Element.centerX
-        , Element.paddingXY 0 14
+        , Element.paddingXY minPaddingX 14
         ]
         [ headerLogo <| Palette.rem 1.5
         , headerItems activeRoute
@@ -151,24 +156,23 @@ routeTitle route =
 
 footer : Element msg
 footer =
-    Element.column
+    Element.wrappedRow
         [ Element.width maxWidth
         , Element.centerX
-        , Element.paddingXY 0 <| Palette.rem 1.25
+        , Element.paddingXY minPaddingX <| Palette.rem 1.25
+        , Element.spacing 10
         ]
-        [ Element.wrappedRow [ Element.spacing 10 ]
-            [ Element.el [ Palette.underlineOnHover ] <| headerLogo <| Palette.rem 1
-            , Element.paragraph []
-                [ Element.text "An interactive learning project from "
-                , Element.newTabLink
-                    [ Element.Font.color Palette.color
-                    , Palette.underlineOnHover
-                    ]
-                    { url = "https://thinkster.io"
-                    , label = Element.text "Thinkster"
-                    }
-                , Element.text ". Code & design licensed under MIT."
+        [ Element.el [ Palette.underlineOnHover ] <| headerLogo <| Palette.rem 1
+        , Element.paragraph []
+            [ Element.text "An interactive learning project from "
+            , Element.newTabLink
+                [ Element.Font.color Palette.color
+                , Palette.underlineOnHover
                 ]
+                { url = "https://thinkster.io"
+                , label = Element.text "Thinkster"
+                }
+            , Element.text ". Code & design licensed under MIT."
             ]
         ]
         |> Element.el

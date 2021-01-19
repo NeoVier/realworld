@@ -11,6 +11,18 @@
         contrast(101%);
 }
 
+.nav-icon svg {
+    opacity: 0.3;
+}
+
+.nav-icon.active svg {
+    opacity: 0.8;
+}
+
+.nav-icon:hover svg {
+    opacity: 0.6;
+}
+
 *:focus-within {
     box-shadow: none !important;
     border-color: rgb(126, 181, 223) !important;

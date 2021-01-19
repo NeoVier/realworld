@@ -5,23 +5,27 @@ import Element.Background
 import Element.Font
 import Element.Region
 import Html exposing (Html)
+import Html.Attributes
+import Ionicon
 import Palette
 import Route exposing (Route)
+import User exposing (User)
 import User.Username as Username
 
 
 view :
     Maybe Route
+    -> Maybe User
     -> { title : String, body : List (Element msg) }
     -> { title : String, body : Html msg }
-view activeRoute document =
+view activeRoute activeUser document =
     { title = document.title ++ " - Conduit"
     , body =
         Element.column
             [ Element.width Element.fill
             , Element.height Element.fill
             ]
-            [ header activeRoute
+            [ header activeRoute activeUser
             , Element.column
                 [ Element.width Element.fill
                 , Element.height Element.fill
@@ -44,15 +48,15 @@ view activeRoute document =
 -- HEADER
 
 
-header : Maybe Route -> Element msg
-header activeRoute =
+header : Maybe Route -> Maybe User -> Element msg
+header activeRoute activeUser =
     Element.row
         [ Element.width Palette.maxWidth
         , Element.centerX
         , Element.paddingXY Palette.minPaddingX 0
         ]
         [ headerLogo <| Palette.rem 1.5
-        , headerItems activeRoute
+        , headerItems activeRoute activeUser
         ]
         |> Element.el
             [ Element.width Element.fill
@@ -73,9 +77,22 @@ headerLogo fontSize =
         { route = Route.Home, label = Element.text "conduit" }
 
 
-headerItems : Maybe Route -> Element msg
-headerItems activeRoute =
-    List.map (headerItem activeRoute) [ Route.Home, Route.Login, Route.Register ]
+headerItems : Maybe Route -> Maybe User -> Element msg
+headerItems activeRoute activeUser =
+    let
+        items =
+            case activeUser of
+                Nothing ->
+                    [ Route.Home, Route.Login, Route.Register ]
+
+                Just user ->
+                    [ Route.Home
+                    , Route.Editor Nothing
+                    , Route.Settings
+                    , Route.Profile { favorites = False, username = user.username }
+                    ]
+    in
+    List.map (headerItem activeRoute) items
         |> Element.row [ Element.alignRight, Element.spacing <| Palette.rem 1 ]
 
 
@@ -89,48 +106,90 @@ headerItem activeRoute itemRoute =
 
                 Just r ->
                     r == itemRoute
+
+        iconSize =
+            15
+
+        activeColor =
+            Element.rgba 0 0 0 0.8
+
+        inactiveColor =
+            Element.rgba 0 0 0 0.3
+
+        hoverColor =
+            Element.rgba 0 0 0 0.6
+
+        iconColor =
+            { red = 0, blue = 0, green = 0, alpha = 1 }
+
+        ( name, icon ) =
+            routeTitle itemRoute
     in
     Route.linkToRoute
-        [ if isActive then
-            Element.Font.color <| Element.rgba 0 0 0 0.8
+        [ Element.Font.color <|
+            if isActive then
+                activeColor
 
-          else
-            Element.Font.color <| Element.rgba 0 0 0 0.3
+            else
+                inactiveColor
         , Element.mouseOver <|
             if isActive then
                 []
 
             else
-                [ Element.Font.color <| Element.rgba 0 0 0 0.6 ]
+                [ Element.Font.color hoverColor ]
+        , Element.htmlAttribute <|
+            Html.Attributes.classList
+                [ ( "nav-icon", True ), ( "active", isActive ) ]
         ]
         { route = itemRoute
-        , label = Element.text <| routeTitle itemRoute
+        , label =
+            Element.row [ Element.spacing 2 ]
+                [ Maybe.map
+                    (\i ->
+                        i iconSize iconColor
+                            |> Element.html
+                            |> Element.el [ Element.centerY ]
+                    )
+                    icon
+                    |> Maybe.withDefault Element.none
+                , Element.text name
+                ]
         }
 
 
-routeTitle : Route -> String
+routeTitle :
+    Route
+    ->
+        ( String
+        , Maybe
+            (Int
+             -> { red : Float, blue : Float, green : Float, alpha : Float }
+             -> Html msg
+            )
+        )
 routeTitle route =
     case route of
         Route.Home ->
-            "Home"
+            ( "Home", Nothing )
 
         Route.Login ->
-            "Sign in"
+            ( "Sign in", Nothing )
 
         Route.Register ->
-            "Sign up"
+            ( "Sign up", Nothing )
 
         Route.Settings ->
-            "Settings"
+            ( "Settings", Just Ionicon.gearA )
 
         Route.Editor _ ->
-            "New Article"
+            ( "New Article", Just Ionicon.compose )
 
         Route.Article _ ->
-            "View Article"
+            ( "View Article", Nothing )
 
         Route.Profile { username } ->
-            Username.toString username
+            ( Username.toString username, Just Ionicon.person )
 
 
 

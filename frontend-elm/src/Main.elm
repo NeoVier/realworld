@@ -17,6 +17,7 @@ import Page.Settings
 import Route exposing (Route)
 import Slug
 import Url
+import User exposing (User)
 import User.Username as Username
 
 
@@ -36,7 +37,11 @@ type Page
 
 
 type alias Model =
-    { navKey : Nav.Key, currPage : Page, device : Element.Device }
+    { navKey : Nav.Key
+    , currPage : Page
+    , device : Element.Device
+    , user : Maybe User
+    }
 
 
 type alias Dimmensions =
@@ -53,6 +58,7 @@ init flags url navKey =
         { navKey = navKey
         , currPage = NotFound
         , device = Element.classifyDevice flags
+        , user = Nothing
         }
 
 
@@ -113,6 +119,10 @@ update msg model =
         ( GotHomeMsg subMsg, Home subModel ) ->
             Page.Home.update subMsg subModel
                 |> updateWith model Home GotHomeMsg
+
+        ( GotLoginMsg ((Page.Login.SendToSharedModel user) as subMsg), Login subModel ) ->
+            Page.Login.update subMsg subModel
+                |> updateWith { model | user = Just user } Login GotLoginMsg
 
         ( GotLoginMsg subMsg, Login subModel ) ->
             Page.Login.update subMsg subModel
@@ -177,14 +187,15 @@ updateWith model toPage toMsg ( subModel, subCmd ) =
 
 viewPage :
     Maybe Route
+    -> Maybe User
     -> { title : String, body : List (Element subMsg) }
     -> (subMsg -> Msg)
     -> Browser.Document Msg
-viewPage activeRoute page toMsg =
+viewPage activeRoute activeUser page toMsg =
     let
         layoutView =
-            Layout.view
-                activeRoute
+            Layout.view activeRoute
+                activeUser
                 { title = page.title
                 , body = page.body
                 }
@@ -196,12 +207,13 @@ viewPage activeRoute page toMsg =
 
 viewStaticPage :
     Maybe Route
+    -> Maybe User
     -> { title : String, body : List (Element msg) }
     -> Browser.Document msg
-viewStaticPage activeRoute page =
+viewStaticPage activeRoute activeUser page =
     let
         layoutView =
-            Layout.view activeRoute { title = page.title, body = page.body }
+            Layout.view activeRoute activeUser { title = page.title, body = page.body }
     in
     { title = layoutView.title
     , body = [ layoutView.body ]
@@ -212,40 +224,48 @@ view : Model -> Browser.Document Msg
 view model =
     case model.currPage of
         NotFound ->
-            viewStaticPage Nothing { title = "Not Found", body = [ Page.NotFound.view ] }
+            viewStaticPage Nothing model.user { title = "Not Found", body = [ Page.NotFound.view ] }
 
         Home subModel ->
-            viewPage (Just Route.Home) (Page.Home.view subModel) GotHomeMsg
+            viewPage (Just Route.Home) model.user (Page.Home.view subModel) GotHomeMsg
 
         Login subModel ->
-            viewPage (Just Route.Login) (Page.Login.view subModel) GotLoginMsg
+            viewPage (Just Route.Login) model.user (Page.Login.view subModel) GotLoginMsg
 
         Register subModel ->
-            viewPage (Just Route.Register) (Page.Register.view subModel) GotRegisterMsg
+            viewPage (Just Route.Register) model.user (Page.Register.view subModel) GotRegisterMsg
 
         Settings subModel ->
-            viewPage (Just Route.Settings) (Page.Settings.view subModel) GotSettingsMsg
+            viewPage (Just Route.Settings) model.user (Page.Settings.view subModel) GotSettingsMsg
 
         Editor subModel ->
-            -- TODO ?
             viewPage (Just (Route.Editor Nothing))
+                model.user
                 (Page.Editor.view subModel)
                 GotEditorMsg
 
         Article subModel ->
-            -- TODO ?
             viewPage (Just (Route.Article <| Slug.fromString ""))
+                model.user
                 (Page.Article.view subModel)
                 GotArticleMsg
 
         Profile subModel ->
-            -- TODO ?
             viewPage
                 (Just
                     (Route.Profile
-                        { favorites = False, username = Username.fromString "" }
+                        { favorites = False
+                        , username =
+                            case model.user of
+                                Nothing ->
+                                    Username.fromString ""
+
+                                Just user ->
+                                    user.username
+                        }
                     )
                 )
+                model.user
                 (Page.Profile.view subModel)
                 GotProfileMsg
 

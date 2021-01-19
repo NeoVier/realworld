@@ -11,6 +11,7 @@ import Form
 import Http
 import Palette
 import Route
+import Task
 import User exposing (User)
 
 
@@ -46,6 +47,7 @@ type Msg
     | ChangedPassword String
     | ClickedSubmit
     | LoggedIn (Result Http.Error User)
+    | SendToSharedModel User
 
 
 
@@ -68,7 +70,6 @@ update msg model =
                         ++ Form.passwordValidation model.password
             in
             if List.isEmpty errors then
-                -- TODO - Use API
                 ( { model | submitting = True, errors = [] }
                 , Api.login { email = model.email, password = model.password } LoggedIn
                 )
@@ -79,19 +80,18 @@ update msg model =
                 )
 
         LoggedIn (Ok user) ->
-            ( model, Cmd.none )
+            ( model, Task.succeed user |> Task.perform SendToSharedModel )
 
-        LoggedIn (Err error) ->
-            let
-                error2 =
-                    Debug.log "error" error
-            in
+        LoggedIn (Err _) ->
             ( { model
                 | errors = [ "couldn't log in" ]
                 , submitting = False
               }
             , Cmd.none
             )
+
+        SendToSharedModel _ ->
+            ( model, Cmd.none )
 
 
 

@@ -1,6 +1,15 @@
-module Palette exposing (color, rem, underlineOnHover)
+module Palette exposing
+    ( color
+    , logoFont
+    , maxWidth
+    , minPaddingX
+    , regularFont
+    , rem
+    , underlineOnHover
+    )
 
 import Element
+import Element.Font
 import Html.Attributes
 
 
@@ -19,3 +28,29 @@ underlineOnHover : Element.Attribute msg
 underlineOnHover =
     Html.Attributes.class "underline"
         |> Element.htmlAttribute
+
+
+maxWidth : Element.Length
+maxWidth =
+    Element.maximum (1140 + minPaddingX) Element.fill
+
+
+minPaddingX : Int
+minPaddingX =
+    30
+
+
+logoFont : Element.Attribute msg
+logoFont =
+    Element.Font.family
+        [ Element.Font.typeface "Titillium Web"
+        , Element.Font.sansSerif
+        ]
+
+
+regularFont : Element.Attribute msg
+regularFont =
+    Element.Font.family
+        [ Element.Font.typeface "Source Sans Pro"
+        , Element.Font.sansSerif
+        ]

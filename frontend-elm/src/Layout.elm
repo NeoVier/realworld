@@ -10,16 +10,6 @@ import Route exposing (Route)
 import User
 
 
-maxWidth : Element.Length
-maxWidth =
-    Element.maximum 1110 Element.fill
-
-
-minPaddingX : Int
-minPaddingX =
-    31
-
-
 view :
     Maybe Route
     -> { title : String, body : List (Element msg) }
@@ -33,12 +23,10 @@ view activeRoute document =
             ]
             [ header activeRoute
             , Element.column
-                [ Element.width maxWidth
-                , Element.paddingXY minPaddingX 30
-                , Element.spacing 20
-                , Element.centerX
-                , Element.Region.mainContent
+                [ Element.width Element.fill
                 , Element.height Element.fill
+                , Element.spacing 20
+                , Element.Region.mainContent
                 ]
                 document.body
             , footer
@@ -47,10 +35,7 @@ view activeRoute document =
                 [ Element.width Element.fill
                 , Element.height Element.fill
                 , Element.Font.size <| Palette.rem 1
-                , Element.Font.family
-                    [ Element.Font.typeface "Source Sans Pro"
-                    , Element.Font.sansSerif
-                    ]
+                , Palette.regularFont
                 ]
     }
 
@@ -62,9 +47,9 @@ view activeRoute document =
 header : Maybe Route -> Element msg
 header activeRoute =
     Element.row
-        [ Element.width maxWidth
+        [ Element.width Palette.maxWidth
         , Element.centerX
-        , Element.paddingXY minPaddingX 14
+        , Element.paddingXY Palette.minPaddingX 0
         ]
         [ headerLogo <| Palette.rem 1.5
         , headerItems activeRoute
@@ -73,6 +58,7 @@ header activeRoute =
             [ Element.width Element.fill
             , Element.Background.color <| Element.rgb 1 1 1
             , Element.Region.navigation
+            , Element.paddingEach { right = 0, left = 0, top = 14, bottom = 18 }
             ]
 
 
@@ -82,10 +68,7 @@ headerLogo fontSize =
         [ Element.Font.bold
         , Element.Font.size fontSize
         , Element.Font.color Palette.color
-        , Element.Font.family
-            [ Element.Font.typeface "Titillium Web"
-            , Element.Font.sansSerif
-            ]
+        , Palette.logoFont
         ]
         { route = Route.Home, label = Element.text "conduit" }
 
@@ -157,9 +140,9 @@ routeTitle route =
 footer : Element msg
 footer =
     Element.wrappedRow
-        [ Element.width maxWidth
+        [ Element.width Palette.maxWidth
         , Element.centerX
-        , Element.paddingXY minPaddingX <| Palette.rem 1.25
+        , Element.paddingXY Palette.minPaddingX <| Palette.rem 1.25
         , Element.spacing 10
         ]
         [ Element.el [ Palette.underlineOnHover ] <| headerLogo <| Palette.rem 1

@@ -1,6 +1,6 @@
 module Form exposing (defaultAttributes, emailValidation, passwordValidation)
 
-import Element exposing (toRgb)
+import Element
 import Element.Border
 import Element.Font
 import Palette

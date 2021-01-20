@@ -1,8 +1,8 @@
 module Route exposing (Route(..), fromUrl, linkToRoute, replaceUrl)
 
+import Article.Slug exposing (Slug(..))
 import Browser.Navigation as Nav
 import Element exposing (Element)
-import Slug exposing (Slug(..))
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
 import User.Username as Username exposing (Username)
@@ -30,8 +30,8 @@ parser =
         , Parser.map Register (Parser.s "register")
         , Parser.map Settings (Parser.s "settings")
         , Parser.map (Editor Nothing) (Parser.s "editor")
-        , Parser.map (Editor << Just << Slug.fromString) (Parser.s "editor" </> Parser.string)
-        , Parser.map (Article << Slug.fromString) (Parser.s "article" </> Parser.string)
+        , Parser.map (Editor << Just << Article.Slug.fromString) (Parser.s "editor" </> Parser.string)
+        , Parser.map (Article << Article.Slug.fromString) (Parser.s "article" </> Parser.string)
         , Parser.map
             (\username ->
                 Profile { favorites = False, username = Username.fromString username }
@@ -97,10 +97,10 @@ routeToPieces route =
                     [ "editor" ]
 
                 Just slug ->
-                    [ "editor", Slug.toString slug ]
+                    [ "editor", Article.Slug.toString slug ]
 
         Article slug ->
-            [ "article", Slug.toString slug ]
+            [ "article", Article.Slug.toString slug ]
 
         Profile { favorites, username } ->
             [ "profile", Username.toString username ]

@@ -1,4 +1,4 @@
-module Tag exposing (Tag, decoder, fromString, toString)
+module Article.Tag exposing (Tag, decoder, fromString, toString)
 
 import Json.Decode exposing (Decoder)
 

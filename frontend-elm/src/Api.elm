@@ -1,12 +1,12 @@
 module Api exposing (favoriteArticle, fetchFeed, fetchUser, listTags, login, register, unfavoriteArticle)
 
 import Article exposing (Article)
+import Article.Slug
+import Article.Tag exposing (Tag)
 import Feed exposing (Feed)
 import Http
 import Json.Decode
 import Json.Encode
-import Slug
-import Tag exposing (Tag)
 import User exposing (User)
 
 
@@ -94,7 +94,7 @@ fetchFeed feed maybeUser toMsg =
             optionallySignedRequest
                 { method = "GET"
                 , userToken = Maybe.map .token maybeUser
-                , url = baseUrl ++ "/articles?tag=" ++ Tag.toString tag
+                , url = baseUrl ++ "/articles?tag=" ++ Article.Tag.toString tag
                 , body = Http.emptyBody
                 , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
                 , timeout = Nothing
@@ -107,7 +107,7 @@ favoriteArticle article user toMsg =
     signedRequest
         { method = "POST"
         , userToken = user.token
-        , url = baseUrl ++ "/articles/" ++ Slug.toString article.slug ++ "/favorite"
+        , url = baseUrl ++ "/articles/" ++ Article.Slug.toString article.slug ++ "/favorite"
         , body = Http.emptyBody
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
         , timeout = Nothing
@@ -120,7 +120,7 @@ unfavoriteArticle article user toMsg =
     signedRequest
         { method = "DELETE"
         , userToken = user.token
-        , url = baseUrl ++ "/articles/" ++ Slug.toString article.slug ++ "/favorite"
+        , url = baseUrl ++ "/articles/" ++ Article.Slug.toString article.slug ++ "/favorite"
         , body = Http.emptyBody
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
         , timeout = Nothing
@@ -134,7 +134,7 @@ listTags toMsg =
         { url = baseUrl ++ "/tags"
         , expect =
             Http.expectJson toMsg
-                (Json.Decode.field "tags" (Json.Decode.list Tag.decoder))
+                (Json.Decode.field "tags" (Json.Decode.list Article.Tag.decoder))
         }
 
 

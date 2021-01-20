@@ -1,4 +1,4 @@
-module Profile exposing (Profile, decoder)
+module User.Profile exposing (Profile, decoder)
 
 import Json.Decode exposing (Decoder)
 import Json.Decode.Pipeline as JDP

@@ -1,13 +1,13 @@
 module Feed exposing (Feed(..), fromString, toString)
 
-import Tag
+import Article.Tag
 import User exposing (User)
 
 
 type Feed
     = Global
     | Personal User
-    | Tag Tag.Tag
+    | Tag Article.Tag.Tag
 
 
 fromString : String -> Maybe User -> Feed
@@ -20,7 +20,7 @@ fromString string maybeUser =
             Personal user
 
         ( x, _ ) ->
-            Tag <| Tag.fromString <| String.dropLeft 1 x
+            Tag <| Article.Tag.fromString <| String.dropLeft 1 x
 
 
 toString : Feed -> String
@@ -33,4 +33,4 @@ toString feed =
             "Your Feed"
 
         Tag tag ->
-            "#" ++ Tag.toString tag
+            "#" ++ Article.Tag.toString tag

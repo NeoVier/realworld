@@ -2,6 +2,7 @@ module Page.Home exposing (Model, Msg(..), init, update, view)
 
 import Api
 import Article exposing (Article)
+import Article.Tag exposing (Tag)
 import Browser.Navigation as Nav
 import Element exposing (Element)
 import Element.Background
@@ -15,7 +16,6 @@ import Http
 import Ionicon
 import Palette
 import Route
-import Tag exposing (Tag)
 import Task
 import Time
 import TimeFormat
@@ -511,7 +511,7 @@ viewArticleTag tag =
         ]
     <|
         Element.text <|
-            Tag.toString tag
+            Article.Tag.toString tag
 
 
 
@@ -546,6 +546,6 @@ viewTag tag =
         ]
         { onPress = Just <| ClickedTag tag
         , label =
-            Tag.toString tag
+            Article.Tag.toString tag
                 |> Element.text
         }

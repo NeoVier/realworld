@@ -1,8 +1,8 @@
 module Page.Article exposing (Model, Msg(..), init, update, view)
 
 import Article exposing (Article)
+import Article.Slug exposing (Slug)
 import Element exposing (Element)
-import Slug exposing (Slug)
 
 
 

@@ -1,6 +1,7 @@
 port module Main exposing (main)
 
 import Api
+import Article.Slug
 import Browser
 import Browser.Events
 import Browser.Navigation as Nav
@@ -17,7 +18,6 @@ import Page.Profile
 import Page.Register
 import Page.Settings
 import Route exposing (Route)
-import Slug
 import Url
 import User exposing (User)
 import User.Username as Username
@@ -325,7 +325,7 @@ view model =
                 GotEditorMsg
 
         Article subModel ->
-            viewPage (Just (Route.Article <| Slug.fromString ""))
+            viewPage (Just (Route.Article <| Article.Slug.fromString ""))
                 model.user
                 (Page.Article.view subModel)
                 GotArticleMsg

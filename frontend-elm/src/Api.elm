@@ -1,4 +1,4 @@
-module Api exposing (favoriteArticle, fetchFeed, listTags, login, unfavoriteArticle)
+module Api exposing (favoriteArticle, fetchFeed, fetchUser, listTags, login, register, unfavoriteArticle)
 
 import Article exposing (Article)
 import Feed exposing (Feed)
@@ -17,7 +17,7 @@ baseUrl =
 
 signedRequest :
     { method : String
-    , user : User
+    , userToken : String
     , url : String
     , body : Http.Body
     , expect : Http.Expect msg
@@ -25,10 +25,10 @@ signedRequest :
     , tracker : Maybe String
     }
     -> Cmd msg
-signedRequest { method, user, url, body, expect, timeout, tracker } =
+signedRequest { method, userToken, url, body, expect, timeout, tracker } =
     optionallySignedRequest
         { method = method
-        , user = Just user
+        , userToken = Just userToken
         , url = url
         , body = body
         , expect = expect
@@ -39,7 +39,7 @@ signedRequest { method, user, url, body, expect, timeout, tracker } =
 
 optionallySignedRequest :
     { method : String
-    , user : Maybe User
+    , userToken : Maybe String
     , url : String
     , body : Http.Body
     , expect : Http.Expect msg
@@ -47,16 +47,16 @@ optionallySignedRequest :
     , tracker : Maybe String
     }
     -> Cmd msg
-optionallySignedRequest { method, user, url, body, expect, timeout, tracker } =
+optionallySignedRequest { method, userToken, url, body, expect, timeout, tracker } =
     Http.request
         { method = method
         , headers =
-            case user of
+            case userToken of
                 Nothing ->
                     []
 
-                Just u ->
-                    [ Http.header "Authorization" <| "Token " ++ u.token ]
+                Just token ->
+                    [ Http.header "Authorization" <| "Token " ++ token ]
         , url = url
         , body = body
         , expect = expect
@@ -71,7 +71,7 @@ fetchFeed feed maybeUser toMsg =
         Feed.Global ->
             optionallySignedRequest
                 { method = "GET"
-                , user = maybeUser
+                , userToken = Maybe.map .token maybeUser
                 , url = baseUrl ++ "/articles"
                 , body = Http.emptyBody
                 , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
@@ -82,7 +82,7 @@ fetchFeed feed maybeUser toMsg =
         Feed.Personal user ->
             signedRequest
                 { method = "GET"
-                , user = user
+                , userToken = user.token
                 , url = baseUrl ++ "/articles/feed"
                 , body = Http.emptyBody
                 , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
@@ -93,7 +93,7 @@ fetchFeed feed maybeUser toMsg =
         Feed.Tag tag ->
             optionallySignedRequest
                 { method = "GET"
-                , user = maybeUser
+                , userToken = Maybe.map .token maybeUser
                 , url = baseUrl ++ "/articles?tag=" ++ Tag.toString tag
                 , body = Http.emptyBody
                 , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
@@ -106,7 +106,7 @@ favoriteArticle : Article -> User -> (Result Http.Error Article -> msg) -> Cmd m
 favoriteArticle article user toMsg =
     signedRequest
         { method = "POST"
-        , user = user
+        , userToken = user.token
         , url = baseUrl ++ "/articles/" ++ Slug.toString article.slug ++ "/favorite"
         , body = Http.emptyBody
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
@@ -119,7 +119,7 @@ unfavoriteArticle : Article -> User -> (Result Http.Error Article -> msg) -> Cmd
 unfavoriteArticle article user toMsg =
     signedRequest
         { method = "DELETE"
-        , user = user
+        , userToken = user.token
         , url = baseUrl ++ "/articles/" ++ Slug.toString article.slug ++ "/favorite"
         , body = Http.emptyBody
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
@@ -148,11 +148,44 @@ login { email, password } toMsg =
                     [ ( "user"
                       , Json.Encode.object
                             [ ( "email", Json.Encode.string email )
-                            , ( "password"
-                              , Json.Encode.string password
-                              )
+                            , ( "password", Json.Encode.string password )
                             ]
                       )
                     ]
         , expect = Http.expectJson toMsg (Json.Decode.field "user" User.decoder)
+        }
+
+
+register :
+    { username : String, email : String, password : String }
+    -> (Result Http.Error User -> msg)
+    -> Cmd msg
+register { username, email, password } toMsg =
+    Http.post
+        { url = baseUrl ++ "/users"
+        , body =
+            Http.jsonBody <|
+                Json.Encode.object
+                    [ ( "user"
+                      , Json.Encode.object
+                            [ ( "username", Json.Encode.string username )
+                            , ( "email", Json.Encode.string email )
+                            , ( "password", Json.Encode.string password )
+                            ]
+                      )
+                    ]
+        , expect = Http.expectJson toMsg (Json.Decode.field "user" User.decoder)
+        }
+
+
+fetchUser : String -> (Result Http.Error User -> msg) -> Cmd msg
+fetchUser token toMsg =
+    signedRequest
+        { method = "GET"
+        , userToken = token
+        , url = baseUrl ++ "/user"
+        , body = Http.emptyBody
+        , expect = Http.expectJson toMsg (Json.Decode.field "user" User.decoder)
+        , timeout = Nothing
+        , tracker = Nothing
         }

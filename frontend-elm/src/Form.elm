@@ -1,8 +1,17 @@
-module Form exposing (defaultAttributes, emailValidation, passwordValidation)
+module Form exposing
+    ( defaultAttributes
+    , emailValidation
+    , passwordValidation
+    , submitButton
+    , usernameValidation
+    , viewError
+    )
 
-import Element
+import Element exposing (Element)
+import Element.Background
 import Element.Border
 import Element.Font
+import Element.Input
 import Palette
 
 
@@ -46,6 +55,16 @@ fieldValidation { fieldName, fieldValue, minLength, canBeEmpty } =
     emptyValidation ++ lengthValidation
 
 
+usernameValidation : String -> List String
+usernameValidation username =
+    fieldValidation
+        { fieldName = "username"
+        , fieldValue = username
+        , minLength = 3
+        , canBeEmpty = False
+        }
+
+
 emailValidation : String -> List String
 emailValidation email =
     fieldValidation
@@ -61,6 +80,44 @@ passwordValidation password =
     fieldValidation
         { fieldName = "password"
         , fieldValue = password
-        , minLength = 3
+        , minLength = 8
         , canBeEmpty = False
+        }
+
+
+viewError : String -> Element msg
+viewError error =
+    Element.text error
+        |> Element.el
+            [ Element.Font.color <| Element.rgb255 0xB8 0x5C 0x5C
+            , Element.Font.bold
+            ]
+
+
+submitButton :
+    List (Element.Attribute msg)
+    -> { onPress : msg, label : String, submitting : Bool }
+    -> Element msg
+submitButton attributes { onPress, label, submitting } =
+    Element.Input.button
+        ([ Element.paddingXY (Palette.rem 1.6) (Palette.rem 0.85)
+         , Element.Font.size (Palette.rem 1.25)
+         , Element.Font.color <| Element.rgb 1 1 1
+         , Element.Border.rounded (Palette.rem 0.2)
+         , Element.Background.color <|
+            if submitting then
+                Element.rgb255 143 214 143
+
+            else
+                Palette.color
+         ]
+            ++ attributes
+        )
+        { onPress =
+            if submitting then
+                Nothing
+
+            else
+                Just onPress
+        , label = Element.text label
         }

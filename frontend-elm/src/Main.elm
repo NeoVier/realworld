@@ -1,10 +1,13 @@
-module Main exposing (main)
+port module Main exposing (main)
 
+import Api
 import Browser
 import Browser.Events
 import Browser.Navigation as Nav
 import Element exposing (Element)
 import Html
+import Http
+import Json.Decode
 import Layout
 import Page.Article
 import Page.Editor
@@ -49,17 +52,20 @@ type alias Dimmensions =
 
 
 type alias Flags =
-    Dimmensions
+    { dimmensions : Dimmensions
+    , userToken : String
+    }
 
 
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url navKey =
-    changeRouteTo (Route.fromUrl url)
+init { dimmensions, userToken } url navKey =
+    changeRouteWithCmd (Route.fromUrl url)
         { navKey = navKey
         , currPage = NotFound
-        , device = Element.classifyDevice flags
+        , device = Element.classifyDevice dimmensions
         , user = Nothing
         }
+        (Api.fetchUser userToken GotUser)
 
 
 
@@ -70,6 +76,7 @@ type Msg
     = ChangedUrl Url.Url
     | RequestedUrl Browser.UrlRequest
     | Resized Dimmensions
+    | GotUser (Result Http.Error User)
     | GotHomeMsg Page.Home.Msg
     | GotLoginMsg Page.Login.Msg
     | GotRegisterMsg Page.Register.Msg
@@ -96,6 +103,13 @@ main =
 
 
 
+-- PORTS
+
+
+port sendUser : Json.Decode.Value -> Cmd msg
+
+
+
 -- UPDATE
 
 
@@ -116,20 +130,54 @@ update msg model =
         ( Resized dimm, _ ) ->
             ( { model | device = Element.classifyDevice dimm }, Cmd.none )
 
+        ( GotUser (Ok user), _ ) ->
+            let
+                shouldRedirect =
+                    case model.currPage of
+                        Login _ ->
+                            True
+
+                        Register _ ->
+                            True
+
+                        _ ->
+                            False
+            in
+            ( { model | user = Just user }
+            , if shouldRedirect then
+                Route.replaceUrl model.navKey Route.Home
+
+              else
+                Cmd.none
+            )
+
+        ( GotUser (Err _), _ ) ->
+            ( model, Cmd.none )
+
         ( GotHomeMsg subMsg, Home subModel ) ->
             Page.Home.update subMsg subModel model.user model.navKey
                 |> updateWith model Home GotHomeMsg
 
         ( GotLoginMsg ((Page.Login.SendToSharedModel user) as subMsg), Login subModel ) ->
             Page.Login.update subMsg subModel model.navKey
-                |> updateWith { model | user = Just user } Login GotLoginMsg
+                |> updateWithCmd { model | user = Just user }
+                    (sendUser <| User.encoder user)
+                    Login
+                    GotLoginMsg
 
         ( GotLoginMsg subMsg, Login subModel ) ->
             Page.Login.update subMsg subModel model.navKey
                 |> updateWith model Login GotLoginMsg
 
+        ( GotRegisterMsg ((Page.Register.SendToSharedModel user) as subMsg), Register subModel ) ->
+            Page.Register.update subMsg subModel model.navKey
+                |> updateWithCmd { model | user = Just user }
+                    (sendUser <| User.encoder user)
+                    Register
+                    GotRegisterMsg
+
         ( GotRegisterMsg subMsg, Register subModel ) ->
-            Page.Register.update subMsg subModel
+            Page.Register.update subMsg subModel model.navKey
                 |> updateWith model Register GotRegisterMsg
 
         ( GotSettingsMsg subMsg, Settings subModel ) ->
@@ -179,6 +227,19 @@ updateWith :
     -> ( Model, Cmd Msg )
 updateWith model toPage toMsg ( subModel, subCmd ) =
     ( { model | currPage = toPage subModel }, Cmd.map toMsg subCmd )
+
+
+updateWithCmd :
+    Model
+    -> Cmd Msg
+    -> (subModel -> Page)
+    -> (subMsg -> Msg)
+    -> ( subModel, Cmd subMsg )
+    -> ( Model, Cmd Msg )
+updateWithCmd model cmd toPage toMsg ( subModel, subCmd ) =
+    ( { model | currPage = toPage subModel }
+    , Cmd.batch [ Cmd.map toMsg subCmd, cmd ]
+    )
 
 
 
@@ -319,3 +380,12 @@ changeRouteTo maybeRoute model =
         Just (Route.Profile options) ->
             Page.Profile.init options
                 |> updateWith model Profile GotProfileMsg
+
+
+changeRouteWithCmd : Maybe Route -> Model -> Cmd Msg -> ( Model, Cmd Msg )
+changeRouteWithCmd maybeRoute model cmd =
+    let
+        ( newModel, newCmd ) =
+            changeRouteTo maybeRoute model
+    in
+    ( newModel, Cmd.batch [ newCmd, cmd ] )

@@ -1,6 +1,7 @@
-module User.Username exposing (Username, decoder, fromString, toString)
+module User.Username exposing (Username, decoder, encoder, fromString, toString)
 
 import Json.Decode exposing (Decoder)
+import Json.Encode
 
 
 type Username
@@ -20,3 +21,8 @@ toString (Username username) =
 decoder : Decoder Username
 decoder =
     Json.Decode.map Username Json.Decode.string
+
+
+encoder : Username -> Json.Encode.Value
+encoder (Username username) =
+    Json.Encode.string username

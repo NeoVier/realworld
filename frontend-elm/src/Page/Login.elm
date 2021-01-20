@@ -3,8 +3,6 @@ module Page.Login exposing (Model, Msg(..), init, update, view)
 import Api
 import Browser.Navigation as Nav
 import Element exposing (Element)
-import Element.Background
-import Element.Border
 import Element.Font
 import Element.Input
 import Element.Region
@@ -85,7 +83,7 @@ update msg model navKey =
 
         LoggedIn (Err _) ->
             ( { model
-                | errors = [ "couldn't log in" ]
+                | errors = [ "couldn't log in." ]
                 , submitting = False
               }
             , Cmd.none
@@ -130,7 +128,7 @@ view model =
                 , Element.paddingXY 40 10
                 ]
               <|
-                List.map viewError model.errors
+                List.map Form.viewError model.errors
             , Element.Input.email
                 Form.defaultAttributes
                 { onChange = ChangedEmail
@@ -145,36 +143,11 @@ view model =
                 , label = Element.Input.labelHidden "Password"
                 , show = False
                 }
-            , Element.Input.button
-                [ Element.alignRight
-                , Element.paddingXY (Palette.rem 1.6) (Palette.rem 0.85)
-                , Element.Font.size (Palette.rem 1.25)
-                , Element.Font.color <| Element.rgb 1 1 1
-                , Element.Border.rounded (Palette.rem 0.2)
-                , Element.Background.color <|
-                    if model.submitting then
-                        Element.rgb255 143 214 143
-
-                    else
-                        Palette.color
-                ]
-                { onPress =
-                    if model.submitting then
-                        Nothing
-
-                    else
-                        Just ClickedSubmit
-                , label = Element.text "Sign in"
+            , Form.submitButton [ Element.alignRight ]
+                { onPress = ClickedSubmit
+                , label = "Sign in"
+                , submitting = model.submitting
                 }
             ]
         ]
     }
-
-
-viewError : String -> Element Msg
-viewError error =
-    Element.text error
-        |> Element.el
-            [ Element.Font.color <| Element.rgb255 0xB8 0x5C 0x5C
-            , Element.Font.bold
-            ]

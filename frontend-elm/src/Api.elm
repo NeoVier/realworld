@@ -1,10 +1,11 @@
-module Api exposing (fetchFeed, listArticles, listTags, login)
+module Api exposing (favoriteArticle, fetchFeed, listTags, login, unfavoriteArticle)
 
 import Article exposing (Article)
 import Feed exposing (Feed)
 import Http
 import Json.Decode
 import Json.Encode
+import Slug
 import Tag exposing (Tag)
 import User exposing (User)
 
@@ -12,16 +13,6 @@ import User exposing (User)
 baseUrl : String
 baseUrl =
     "https://conduit.productionready.io/api"
-
-
-listArticles : (Result Http.Error (List Article) -> msg) -> Cmd msg
-listArticles toMsg =
-    Http.get
-        { url = baseUrl ++ "/articles"
-        , expect =
-            Http.expectJson toMsg
-                (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
-        }
 
 
 signedRequest :
@@ -109,6 +100,32 @@ fetchFeed feed maybeUser toMsg =
                 , timeout = Nothing
                 , tracker = Nothing
                 }
+
+
+favoriteArticle : Article -> User -> (Result Http.Error Article -> msg) -> Cmd msg
+favoriteArticle article user toMsg =
+    signedRequest
+        { method = "POST"
+        , user = user
+        , url = baseUrl ++ "/articles/" ++ Slug.toString article.slug ++ "/favorite"
+        , body = Http.emptyBody
+        , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+unfavoriteArticle : Article -> User -> (Result Http.Error Article -> msg) -> Cmd msg
+unfavoriteArticle article user toMsg =
+    signedRequest
+        { method = "DELETE"
+        , user = user
+        , url = baseUrl ++ "/articles/" ++ Slug.toString article.slug ++ "/favorite"
+        , body = Http.emptyBody
+        , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 listTags : (Result Http.Error (List Tag) -> msg) -> Cmd msg

@@ -117,7 +117,7 @@ update msg model =
             ( { model | device = Element.classifyDevice dimm }, Cmd.none )
 
         ( GotHomeMsg subMsg, Home subModel ) ->
-            Page.Home.update subMsg subModel model.user
+            Page.Home.update subMsg subModel model.user model.navKey
                 |> updateWith model Home GotHomeMsg
 
         ( GotLoginMsg ((Page.Login.SendToSharedModel user) as subMsg), Login subModel ) ->

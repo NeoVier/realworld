@@ -2,6 +2,7 @@ module Page.Home exposing (Model, Msg(..), init, update, view)
 
 import Api
 import Article exposing (Article)
+import Browser.Navigation as Nav
 import Element exposing (Element)
 import Element.Background
 import Element.Border
@@ -63,17 +64,18 @@ type Msg
     = GotArticles (Result Http.Error (List Article))
     | GotTags (Result Http.Error (List Tag))
     | GotTimeZone Time.Zone
-    | Favorited Article
+    | ClickedFavorite Article
     | ChangedFeed Feed
     | ClickedTag Tag
+    | NoOp
 
 
 
 -- UPDATE
 
 
-update : Msg -> Model -> Maybe User -> ( Model, Cmd Msg )
-update msg model maybeUser =
+update : Msg -> Model -> Maybe User -> Nav.Key -> ( Model, Cmd Msg )
+update msg model maybeUser navKey =
     case msg of
         GotArticles (Ok articles) ->
             ( { model | feed = WithData articles }, Cmd.none )
@@ -90,9 +92,13 @@ update msg model maybeUser =
         GotTimeZone newZone ->
             ( { model | timeZone = newZone }, Cmd.none )
 
-        Favorited favoritedArticle ->
-            case model.feed of
-                WithData articles ->
+        ClickedFavorite favoritedArticle ->
+            let
+                isFavorite =
+                    favoritedArticle.favorited
+            in
+            case ( model.feed, maybeUser ) of
+                ( WithData articles, Just user ) ->
                     ( { model
                         | feed =
                             List.map
@@ -101,7 +107,7 @@ update msg model maybeUser =
                                         { article
                                             | favorited = not article.favorited
                                             , favoritesCount =
-                                                if article.favorited then
+                                                if isFavorite then
                                                     article.favoritesCount - 1
 
                                                 else
@@ -114,9 +120,15 @@ update msg model maybeUser =
                                 articles
                                 |> WithData
                       }
-                      -- TODO - Add api call
-                    , Cmd.none
+                    , if isFavorite then
+                        Api.unfavoriteArticle favoritedArticle user (always NoOp)
+
+                      else
+                        Api.favoriteArticle favoritedArticle user (always NoOp)
                     )
+
+                ( _, Nothing ) ->
+                    ( model, Route.replaceUrl navKey Route.Login )
 
                 _ ->
                     ( model, Cmd.none )
@@ -130,6 +142,9 @@ update msg model maybeUser =
             ( { model | feedType = Feed.Tag tag, feed = Loading }
             , Api.fetchFeed (Feed.Tag tag) maybeUser GotArticles
             )
+
+        NoOp ->
+            ( model, Cmd.none )
 
 
 
@@ -382,7 +397,7 @@ viewArticleAuthor zone article =
             { favoritesCount = article.favoritesCount
             , favorited = article.favorited
             }
-            (Favorited article)
+            (ClickedFavorite article)
         ]
 
 
@@ -475,7 +490,11 @@ viewArticleFooter article =
           <|
             Element.text "Read more..."
         , List.map viewArticleTag article.tagList
-            |> Element.wrappedRow [ Element.alignRight ]
+            |> Element.wrappedRow
+                [ Element.alignRight
+                , Element.width Element.fill
+                , Element.paddingEach { left = 50, right = 0, bottom = 0, top = 0 }
+                ]
         ]
 
 

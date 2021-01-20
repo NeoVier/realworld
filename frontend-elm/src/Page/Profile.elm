@@ -10,12 +10,11 @@ import Element.Input
 import Feed exposing (ProfileFeed)
 import Html.Attributes
 import Http
-import Ionicon
 import Palette
 import Time
 import User exposing (User)
 import User.Profile exposing (Profile)
-import User.Username exposing (Username)
+import User.Username
 
 
 
@@ -209,7 +208,7 @@ view model timeZone maybeUser =
                             Element.text "Loading"
 
                         WithArticles articles ->
-                            Article.viewArticles timeZone ClickedFavorite articles
+                            Article.viewArticles timeZone (Just ClickedFavorite) articles
 
                         WithArticlesError err ->
                             Element.text err
@@ -268,50 +267,13 @@ banner profile maybeUser =
                         , Element.centerX
                         ]
                     <|
-                        viewFollowButton [ Element.alignRight ]
+                        User.Profile.viewFollowButton [ Element.alignRight ]
                             { onPress = Just <| ClickedFollow user
                             , username = profile.username
                             , following = profile.following
+                            , inverted = False
                             }
         ]
-
-
-viewFollowButton :
-    List (Element.Attribute msg)
-    -> { onPress : Maybe msg, username : Username, following : Bool }
-    -> Element msg
-viewFollowButton attributes { onPress, username, following } =
-    let
-        mainColor =
-            Element.rgb255 0x99 0x99 0x99
-    in
-    Element.Input.button
-        ([ Element.paddingXY 8 4
-         , Element.Font.size <| Palette.rem 0.875
-         , Element.Font.color mainColor
-         , Element.Border.color mainColor
-         , Element.Border.width 1
-         , Element.Border.rounded <| Palette.rem 0.2
-         , Element.mouseOver
-            [ Element.Background.color <| Element.rgb255 0xE6 0xE6 0xE6
-            ]
-         ]
-            ++ attributes
-        )
-        { onPress = onPress
-        , label =
-            Element.row [ Element.spacing 3 ]
-                [ Element.el [] <| Element.html <| Ionicon.plusRound 16 (Element.toRgb mainColor)
-                , Element.text <|
-                    (if following then
-                        "Unfollow "
-
-                     else
-                        "Follow "
-                    )
-                        ++ User.Username.toString username
-                ]
-        }
 
 
 

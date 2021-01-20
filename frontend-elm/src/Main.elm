@@ -220,7 +220,7 @@ update msg model =
                 |> updateWith model Editor GotEditorMsg
 
         ( GotArticleMsg subMsg, Article subModel ) ->
-            Page.Article.update subMsg subModel
+            Page.Article.update subMsg subModel model.user
                 |> updateWith model Article GotArticleMsg
 
         ( GotProfileMsg subMsg, Profile subModel ) ->
@@ -346,7 +346,7 @@ view model =
         Article subModel ->
             viewPage (Just (Route.Article <| Article.Slug.fromString ""))
                 model.user
-                (Page.Article.view subModel)
+                (Page.Article.view subModel model.timeZone model.user)
                 GotArticleMsg
 
         Profile subModel ->
@@ -414,7 +414,7 @@ changeRouteTo maybeRoute model =
                 |> updateWith model Editor GotEditorMsg
 
         Just (Route.Article slug) ->
-            Page.Article.init slug
+            Page.Article.init slug model.user
                 |> updateWith model Article GotArticleMsg
 
         Just (Route.Profile { favorites, username }) ->

@@ -53,7 +53,7 @@ init maybeSlug =
             )
 
         Just slug ->
-            ( Loading, Api.fetchArticle slug GotArticle )
+            ( Loading, Api.fetchArticle slug Nothing GotArticle )
 
 
 

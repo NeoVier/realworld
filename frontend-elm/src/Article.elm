@@ -1,4 +1,4 @@
-module Article exposing (Article, decoder, viewArticles)
+module Article exposing (Article, decoder, viewArticles, viewFavoriteButton)
 
 import Article.Slug exposing (Slug)
 import Article.Tag exposing (Tag)
@@ -53,9 +53,15 @@ decoder =
 -- ARTICLE
 
 
-viewArticles : Time.Zone -> (Article -> msg) -> List Article -> Element msg
+viewArticles : Time.Zone -> Maybe (Article -> msg) -> List Article -> Element msg
 viewArticles zone onFavorite articles =
-    List.map (\article -> viewArticle zone (onFavorite article) article) articles
+    List.map
+        (\article ->
+            viewArticle zone
+                (Maybe.map (\x -> x article) onFavorite)
+                article
+        )
+        articles
         |> List.intersperse
             (Element.el
                 [ Element.width Element.fill
@@ -70,7 +76,7 @@ viewArticles zone onFavorite articles =
             ]
 
 
-viewArticle : Time.Zone -> msg -> Article -> Element msg
+viewArticle : Time.Zone -> Maybe msg -> Article -> Element msg
 viewArticle zone onFavorite article =
     Element.column [ Element.width Element.fill, Element.spacing 20 ]
         [ viewArticleAuthor zone onFavorite article
@@ -85,8 +91,8 @@ viewArticle zone onFavorite article =
         ]
 
 
-viewArticleAuthor : Time.Zone -> msg -> Article -> Element msg
-viewArticleAuthor zone onFavorite article =
+viewArticleAuthor : Time.Zone -> Maybe msg -> Article -> Element msg
+viewArticleAuthor zone onPress article =
     let
         userPicSize =
             Palette.rem 2
@@ -131,50 +137,98 @@ viewArticleAuthor zone onFavorite article =
                     TimeFormat.toString zone article.createdAt
             ]
         , viewFavoriteButton [ Element.alignRight ]
-            { favoritesCount = article.favoritesCount
+            { onPress = onPress
+            , favoritesCount = article.favoritesCount
             , favorited = article.favorited
+            , inverted = False
             }
-            onFavorite
         ]
 
 
 viewFavoriteButton :
     List (Element.Attribute msg)
-    -> { favoritesCount : Int, favorited : Bool }
-    -> msg
+    ->
+        { onPress : Maybe msg
+        , favoritesCount : Int
+        , favorited : Bool
+        , inverted : Bool
+        }
     -> Element msg
-viewFavoriteButton attributes { favoritesCount, favorited } onFavorited =
+viewFavoriteButton attributes { onPress, favoritesCount, favorited, inverted } =
+    let
+        fontColor =
+            if inverted then
+                if favorited then
+                    Element.rgba 1 1 1 0.8
+
+                else
+                    Palette.color
+
+            else if favorited then
+                Element.rgb 1 1 1
+
+            else
+                Palette.color
+
+        backgroundColor =
+            if inverted then
+                if favorited then
+                    Palette.color
+
+                else
+                    Element.rgba 0 0 0 0
+
+            else if favorited then
+                Palette.color
+
+            else
+                Element.rgb 1 1 1
+
+        hoverBackgroundColor =
+            if inverted then
+                if favorited then
+                    Palette.color
+
+                else
+                    Palette.color
+
+            else if favorited then
+                Element.rgb255 0x44 0x9D 0x44
+
+            else
+                Palette.color
+
+        hoverFontColor =
+            if inverted then
+                if favorited then
+                    Element.rgb 1 1 1
+
+                else
+                    Element.rgb 1 1 1
+
+            else if favorited then
+                fontColor
+
+            else
+                Element.rgb 1 1 1
+    in
     Element.Input.button
         (attributes
             ++ [ Element.paddingXY (Palette.rem 0.5) (Palette.rem 0.25)
-               , Element.Font.color <|
-                    if favorited then
-                        Element.rgb 1 1 1
-
-                    else
-                        Palette.color
+               , Element.Font.color fontColor
                , Element.Font.size <| Palette.rem 0.875
                , Element.Border.color Palette.color
                , Element.Border.width 1
                , Element.Border.rounded <| Palette.rem 0.2
-               , Element.Background.color <|
-                    if favorited then
-                        Palette.color
-
-                    else
-                        Element.rgb 1 1 1
-               , Element.mouseOver <|
-                    if favorited then
-                        [ Element.Background.color <| Element.rgb255 0x44 0x9D 0x44 ]
-
-                    else
-                        [ Element.Font.color <| Element.rgb 1 1 1
-                        , Element.Background.color Palette.color
-                        ]
+               , Element.Background.color backgroundColor
+               , Element.mouseOver
+                    [ Element.Background.color hoverBackgroundColor
+                    , Element.Font.color hoverFontColor
+                    ]
                , Element.htmlAttribute <| Html.Attributes.class "icon"
                ]
         )
-        { onPress = Just onFavorited
+        { onPress = onPress
         , label =
             Element.row
                 [ Element.spacing 5

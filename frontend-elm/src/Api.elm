@@ -1,6 +1,7 @@
-module Api exposing (createArticle, favoriteArticle, fetchArticle, fetchFeed, fetchProfile, fetchProfileFeed, fetchUser, followUser, listTags, login, register, unfavoriteArticle, unfollowUser, updateArticle, updateUser)
+module Api exposing (createArticle, favoriteArticle, fetchArticle, fetchComments, fetchFeed, fetchProfile, fetchProfileFeed, fetchUser, followUser, listTags, login, register, unfavoriteArticle, unfollowUser, updateArticle, updateUser)
 
 import Article exposing (Article)
+import Article.Comment exposing (Comment)
 import Article.Slug exposing (Slug)
 import Article.Tag exposing (Tag)
 import Feed exposing (Feed)
@@ -150,10 +151,13 @@ unfavoriteArticle article user toMsg =
         }
 
 
-fetchArticle : Slug -> (Result Http.Error Article -> msg) -> Cmd msg
-fetchArticle slug toMsg =
-    Http.get
-        { url = baseUrl ++ "/articles" ++ Article.Slug.toString slug
+fetchArticle : Slug -> Maybe User -> (Result Http.Error Article -> msg) -> Cmd msg
+fetchArticle slug maybeUser toMsg =
+    optionallySignedRequest
+        { method = "GET"
+        , userToken = Maybe.map .token maybeUser
+        , url = baseUrl ++ "/articles/" ++ Article.Slug.toString slug
+        , body = Http.emptyBody
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
         }
 
@@ -370,4 +374,27 @@ unfollowUser username user toMsg =
         , expect =
             Http.expectJson toMsg
                 (Json.Decode.field "profile" User.Profile.decoder)
+        }
+
+
+
+-- COMMENTS
+
+
+fetchComments :
+    Slug
+    -> Maybe User
+    -> (Result Http.Error (List Comment) -> msg)
+    -> Cmd msg
+fetchComments slug maybeUser toMsg =
+    optionallySignedRequest
+        { method = "GET"
+        , userToken = Maybe.map .token maybeUser
+        , url = baseUrl ++ "/articles/" ++ Article.Slug.toString slug ++ "/comments"
+        , body = Http.emptyBody
+        , expect =
+            Http.expectJson toMsg
+                (Json.Decode.field "comments"
+                    (Json.Decode.list Article.Comment.decoder)
+                )
         }

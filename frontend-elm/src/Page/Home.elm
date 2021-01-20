@@ -174,7 +174,7 @@ view model device timeZone maybeUser =
                         Element.text "Loading"
 
                     WithData articles ->
-                        Article.viewArticles timeZone ClickedFavorite articles
+                        Article.viewArticles timeZone (Just ClickedFavorite) articles
 
                     WithError err ->
                         Element.text err

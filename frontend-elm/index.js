@@ -13,6 +13,9 @@ const app = Elm.Main.init({
 });
 
 app.ports.sendUser.subscribe(function (user) {
-  console.log(user.token);
   localStorage.setItem(USER_TOKEN, user.token);
+});
+
+app.ports.logOut.subscribe(function () {
+  localStorage.removeItem(USER_TOKEN);
 });

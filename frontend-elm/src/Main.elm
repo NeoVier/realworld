@@ -5,7 +5,6 @@ import Browser
 import Browser.Events
 import Browser.Navigation as Nav
 import Element exposing (Element)
-import Html
 import Http
 import Json.Decode
 import Layout
@@ -53,7 +52,7 @@ type alias Dimmensions =
 
 type alias Flags =
     { dimmensions : Dimmensions
-    , userToken : String
+    , userToken : Maybe String
     }
 
 
@@ -65,7 +64,13 @@ init { dimmensions, userToken } url navKey =
         , device = Element.classifyDevice dimmensions
         , user = Nothing
         }
-        (Api.fetchUser userToken GotUser)
+        (case userToken of
+            Nothing ->
+                Cmd.none
+
+            Just token ->
+                Api.fetchUser token GotUser
+        )
 
 
 
@@ -77,6 +82,7 @@ type Msg
     | RequestedUrl Browser.UrlRequest
     | Resized Dimmensions
     | GotUser (Result Http.Error User)
+    | LoggedOut
     | GotHomeMsg Page.Home.Msg
     | GotLoginMsg Page.Login.Msg
     | GotRegisterMsg Page.Register.Msg
@@ -107,6 +113,9 @@ main =
 
 
 port sendUser : Json.Decode.Value -> Cmd msg
+
+
+port logOut : () -> Cmd msg
 
 
 
@@ -153,6 +162,9 @@ update msg model =
 
         ( GotUser (Err _), _ ) ->
             ( model, Cmd.none )
+
+        ( LoggedOut, _ ) ->
+            ( { model | user = Nothing }, logOut () )
 
         ( GotHomeMsg subMsg, Home subModel ) ->
             Page.Home.update subMsg subModel model.user model.navKey
@@ -255,26 +267,30 @@ viewPage :
 viewPage activeRoute activeUser page toMsg =
     let
         layoutView =
-            Layout.view activeRoute
+            Layout.view LoggedOut
+                activeRoute
                 activeUser
                 { title = page.title
-                , body = page.body
+                , body = List.map (Element.map toMsg) page.body
                 }
     in
     { title = layoutView.title
-    , body = [ layoutView.body |> Html.map toMsg ]
+    , body = [ layoutView.body ]
     }
 
 
 viewStaticPage :
     Maybe Route
     -> Maybe User
-    -> { title : String, body : List (Element msg) }
-    -> Browser.Document msg
+    -> { title : String, body : List (Element Msg) }
+    -> Browser.Document Msg
 viewStaticPage activeRoute activeUser page =
     let
         layoutView =
-            Layout.view activeRoute activeUser { title = page.title, body = page.body }
+            Layout.view LoggedOut
+                activeRoute
+                activeUser
+                { title = page.title, body = page.body }
     in
     { title = layoutView.title
     , body = [ layoutView.body ]

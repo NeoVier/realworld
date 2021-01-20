@@ -3,6 +3,7 @@ module Layout exposing (view)
 import Element exposing (Element)
 import Element.Background
 import Element.Font
+import Element.Input
 import Element.Region
 import Html exposing (Html)
 import Html.Attributes
@@ -14,18 +15,19 @@ import User.Username as Username
 
 
 view :
-    Maybe Route
+    msg
+    -> Maybe Route
     -> Maybe User
     -> { title : String, body : List (Element msg) }
     -> { title : String, body : Html msg }
-view activeRoute activeUser document =
+view onLogOut activeRoute activeUser document =
     { title = document.title ++ " - Conduit"
     , body =
         Element.column
             [ Element.width Element.fill
             , Element.height Element.fill
             ]
-            [ header activeRoute activeUser
+            [ header onLogOut activeRoute activeUser
             , Element.column
                 [ Element.width Element.fill
                 , Element.height Element.fill
@@ -48,15 +50,15 @@ view activeRoute activeUser document =
 -- HEADER
 
 
-header : Maybe Route -> Maybe User -> Element msg
-header activeRoute activeUser =
+header : msg -> Maybe Route -> Maybe User -> Element msg
+header onLogOut activeRoute activeUser =
     Element.row
         [ Element.width Palette.maxWidth
         , Element.centerX
         , Element.paddingXY Palette.minPaddingX 0
         ]
         [ headerLogo <| Palette.rem 1.5
-        , headerItems activeRoute activeUser
+        , headerItems onLogOut activeRoute activeUser
         ]
         |> Element.el
             [ Element.width Element.fill
@@ -77,9 +79,13 @@ headerLogo fontSize =
         { route = Route.Home, label = Element.text "conduit" }
 
 
-headerItems : Maybe Route -> Maybe User -> Element msg
-headerItems activeRoute activeUser =
+headerItems : msg -> Maybe Route -> Maybe User -> Element msg
+headerItems onLogOut activeRoute activeUser =
     let
+        isLoggedIn =
+            Maybe.map (\_ -> True) activeUser
+                |> Maybe.withDefault False
+
         items =
             case activeUser of
                 Nothing ->
@@ -92,7 +98,21 @@ headerItems activeRoute activeUser =
                     , Route.Profile { favorites = False, username = user.username }
                     ]
     in
-    List.map (headerItem activeRoute) items
+    (List.map (headerItem activeRoute) items
+        ++ (if isLoggedIn then
+                [ Element.Input.button
+                    [ Element.Font.color <| Element.rgba 0 0 0 0.3
+                    , Element.mouseOver [ Element.Font.color <| Element.rgba 0 0 0 0.6 ]
+                    ]
+                    { onPress = Just onLogOut
+                    , label = Element.text "Log out"
+                    }
+                ]
+
+            else
+                []
+           )
+    )
         |> Element.row [ Element.alignRight, Element.spacing <| Palette.rem 1 ]
 
 

@@ -1,7 +1,19 @@
-module Feed exposing (Feed(..), fromString, toString)
+module Feed exposing
+    ( Feed(..)
+    , ProfileFeed(..)
+    , fromString
+    , profileFeedFromString
+    , profileFeedToString
+    , toString
+    )
 
 import Article.Tag
 import User exposing (User)
+import User.Username exposing (Username)
+
+
+
+-- GENERAL
 
 
 type Feed
@@ -34,3 +46,41 @@ toString feed =
 
         Tag tag ->
             "#" ++ Article.Tag.toString tag
+
+
+
+-- PROFILE
+
+
+type ProfileFeed
+    = OwnArticles Username
+    | Favorited Username
+
+
+profileFeedToString : Maybe User -> ProfileFeed -> String
+profileFeedToString maybeUser feed =
+    case feed of
+        OwnArticles username ->
+            case maybeUser of
+                Nothing ->
+                    User.Username.toString username ++ "'s Articles"
+
+                Just user ->
+                    if user.username == username then
+                        "My Articles"
+
+                    else
+                        User.Username.toString username ++ "'s Articles"
+
+        Favorited _ ->
+            "Favorited Articles"
+
+
+profileFeedFromString : String -> Username -> ProfileFeed
+profileFeedFromString string profileOwner =
+    case string of
+        "Favorited Articles" ->
+            Favorited profileOwner
+
+        _ ->
+            OwnArticles profileOwner

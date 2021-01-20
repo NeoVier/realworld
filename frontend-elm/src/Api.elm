@@ -1,4 +1,4 @@
-module Api exposing (createArticle, favoriteArticle, fetchArticle, fetchFeed, fetchUser, listTags, login, register, unfavoriteArticle, updateArticle, updateUser)
+module Api exposing (createArticle, favoriteArticle, fetchArticle, fetchFeed, fetchProfile, fetchProfileFeed, fetchUser, followUser, listTags, login, register, unfavoriteArticle, unfollowUser, updateArticle, updateUser)
 
 import Article exposing (Article)
 import Article.Slug exposing (Slug)
@@ -8,7 +8,8 @@ import Http
 import Json.Decode
 import Json.Encode
 import User exposing (User)
-import User.Username
+import User.Profile exposing (Profile)
+import User.Username exposing (Username)
 
 
 
@@ -26,19 +27,15 @@ signedRequest :
     , url : String
     , body : Http.Body
     , expect : Http.Expect msg
-    , timeout : Maybe Float
-    , tracker : Maybe String
     }
     -> Cmd msg
-signedRequest { method, userToken, url, body, expect, timeout, tracker } =
+signedRequest { method, userToken, url, body, expect } =
     optionallySignedRequest
         { method = method
         , userToken = Just userToken
         , url = url
         , body = body
         , expect = expect
-        , timeout = timeout
-        , tracker = tracker
         }
 
 
@@ -48,11 +45,9 @@ optionallySignedRequest :
     , url : String
     , body : Http.Body
     , expect : Http.Expect msg
-    , timeout : Maybe Float
-    , tracker : Maybe String
     }
     -> Cmd msg
-optionallySignedRequest { method, userToken, url, body, expect, timeout, tracker } =
+optionallySignedRequest { method, userToken, url, body, expect } =
     Http.request
         { method = method
         , headers =
@@ -65,8 +60,8 @@ optionallySignedRequest { method, userToken, url, body, expect, timeout, tracker
         , url = url
         , body = body
         , expect = expect
-        , timeout = timeout
-        , tracker = tracker
+        , timeout = Nothing
+        , tracker = Nothing
         }
 
 
@@ -84,8 +79,6 @@ fetchFeed feed maybeUser toMsg =
                 , url = baseUrl ++ "/articles"
                 , body = Http.emptyBody
                 , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
-                , timeout = Nothing
-                , tracker = Nothing
                 }
 
         Feed.Personal user ->
@@ -95,8 +88,6 @@ fetchFeed feed maybeUser toMsg =
                 , url = baseUrl ++ "/articles/feed"
                 , body = Http.emptyBody
                 , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
-                , timeout = Nothing
-                , tracker = Nothing
                 }
 
         Feed.Tag tag ->
@@ -105,10 +96,36 @@ fetchFeed feed maybeUser toMsg =
                 , userToken = Maybe.map .token maybeUser
                 , url = baseUrl ++ "/articles?tag=" ++ Article.Tag.toString tag
                 , body = Http.emptyBody
-                , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
-                , timeout = Nothing
-                , tracker = Nothing
+                , expect =
+                    Http.expectJson toMsg
+                        (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
                 }
+
+
+fetchProfileFeed :
+    Feed.ProfileFeed
+    -> Maybe User
+    -> (Result Http.Error (List Article) -> msg)
+    -> Cmd msg
+fetchProfileFeed feed maybeUser toMsg =
+    let
+        endpoint =
+            case feed of
+                Feed.OwnArticles owner ->
+                    "/articles?author=" ++ User.Username.toString owner
+
+                Feed.Favorited owner ->
+                    "/articles?favorited=" ++ User.Username.toString owner
+    in
+    optionallySignedRequest
+        { method = "GET"
+        , userToken = Maybe.map .token maybeUser
+        , url = baseUrl ++ endpoint
+        , body = Http.emptyBody
+        , expect =
+            Http.expectJson toMsg
+                (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
+        }
 
 
 favoriteArticle : Article -> User -> (Result Http.Error Article -> msg) -> Cmd msg
@@ -119,8 +136,6 @@ favoriteArticle article user toMsg =
         , url = baseUrl ++ "/articles/" ++ Article.Slug.toString article.slug ++ "/favorite"
         , body = Http.emptyBody
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
-        , timeout = Nothing
-        , tracker = Nothing
         }
 
 
@@ -132,8 +147,6 @@ unfavoriteArticle article user toMsg =
         , url = baseUrl ++ "/articles/" ++ Article.Slug.toString article.slug ++ "/favorite"
         , body = Http.emptyBody
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
-        , timeout = Nothing
-        , tracker = Nothing
         }
 
 
@@ -168,8 +181,6 @@ createArticle { title, description, body, tagList } user toMsg =
                       )
                     ]
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
-        , timeout = Nothing
-        , tracker = Nothing
         }
 
 
@@ -197,8 +208,6 @@ updateArticle { title, description, body, tagList } slug user toMsg =
                       )
                     ]
         , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
-        , timeout = Nothing
-        , tracker = Nothing
         }
 
 
@@ -268,8 +277,6 @@ fetchUser token toMsg =
         , url = baseUrl ++ "/user"
         , body = Http.emptyBody
         , expect = Http.expectJson toMsg (Json.Decode.field "user" User.decoder)
-        , timeout = Nothing
-        , tracker = Nothing
         }
 
 
@@ -317,6 +324,50 @@ updateUser token { email, username, password, image, bio } toMsg =
                       )
                     ]
         , expect = Http.expectJson toMsg (Json.Decode.field "user" User.decoder)
-        , timeout = Nothing
-        , tracker = Nothing
+        }
+
+
+
+-- PROFILE
+
+
+fetchProfile :
+    Username
+    -> Maybe User
+    -> (Result Http.Error Profile -> msg)
+    -> Cmd msg
+fetchProfile username maybeUser toMsg =
+    optionallySignedRequest
+        { method = "GET"
+        , userToken = Maybe.map .token maybeUser
+        , url = baseUrl ++ "/profiles/" ++ User.Username.toString username
+        , body = Http.emptyBody
+        , expect =
+            Http.expectJson toMsg (Json.Decode.field "profile" User.Profile.decoder)
+        }
+
+
+followUser : Username -> User -> (Result Http.Error Profile -> msg) -> Cmd msg
+followUser username user toMsg =
+    signedRequest
+        { method = "POST"
+        , userToken = user.token
+        , url = baseUrl ++ "/profiles/" ++ User.Username.toString username ++ "/follow"
+        , body = Http.emptyBody
+        , expect =
+            Http.expectJson toMsg
+                (Json.Decode.field "profile" User.Profile.decoder)
+        }
+
+
+unfollowUser : Username -> User -> (Result Http.Error Profile -> msg) -> Cmd msg
+unfollowUser username user toMsg =
+    signedRequest
+        { method = "DELETE"
+        , userToken = user.token
+        , url = baseUrl ++ "/profiles/" ++ User.Username.toString username ++ "/follow"
+        , body = Http.emptyBody
+        , expect =
+            Http.expectJson toMsg
+                (Json.Decode.field "profile" User.Profile.decoder)
         }

@@ -6,6 +6,7 @@ import Browser
 import Browser.Events
 import Browser.Navigation as Nav
 import Element exposing (Element)
+import Feed
 import Http
 import Json.Decode
 import Layout
@@ -18,6 +19,8 @@ import Page.Profile
 import Page.Register
 import Page.Settings
 import Route exposing (Route)
+import Task
+import Time
 import Url
 import User exposing (User)
 import User.Username as Username
@@ -42,6 +45,7 @@ type alias Model =
     { navKey : Nav.Key
     , currPage : Page
     , device : Element.Device
+    , timeZone : Time.Zone
     , user : Maybe User
     }
 
@@ -62,14 +66,18 @@ init { dimmensions, userToken } url navKey =
         { navKey = navKey
         , currPage = NotFound
         , device = Element.classifyDevice dimmensions
+        , timeZone = Time.utc
         , user = Nothing
         }
-        (case userToken of
-            Nothing ->
-                Cmd.none
+        (Cmd.batch
+            [ case userToken of
+                Nothing ->
+                    Cmd.none
 
-            Just token ->
-                Api.fetchUser token GotUser
+                Just token ->
+                    Api.fetchUser token GotUser
+            , Task.perform GotTimeZone Time.here
+            ]
         )
 
 
@@ -82,6 +90,7 @@ type Msg
     | RequestedUrl Browser.UrlRequest
     | Resized Dimmensions
     | GotUser (Result Http.Error User)
+    | GotTimeZone Time.Zone
     | LoggedOut
     | GotHomeMsg Page.Home.Msg
     | GotLoginMsg Page.Login.Msg
@@ -163,6 +172,9 @@ update msg model =
         ( GotUser (Err _), _ ) ->
             ( model, Cmd.none )
 
+        ( GotTimeZone newZone, _ ) ->
+            ( { model | timeZone = newZone }, Cmd.none )
+
         ( LoggedOut, _ ) ->
             ( { model | user = Nothing }, logOut () )
 
@@ -212,7 +224,7 @@ update msg model =
                 |> updateWith model Article GotArticleMsg
 
         ( GotProfileMsg subMsg, Profile subModel ) ->
-            Page.Profile.update subMsg subModel
+            Page.Profile.update subMsg subModel model.user
                 |> updateWith model Profile GotProfileMsg
 
         -- Invalid messages
@@ -313,7 +325,7 @@ view model =
         Home subModel ->
             viewPage (Just Route.Home)
                 model.user
-                (Page.Home.view subModel model.device model.user)
+                (Page.Home.view subModel model.device model.timeZone model.user)
                 GotHomeMsg
 
         Login subModel ->
@@ -353,7 +365,7 @@ view model =
                     )
                 )
                 model.user
-                (Page.Profile.view subModel)
+                (Page.Profile.view subModel model.timeZone model.user)
                 GotProfileMsg
 
 
@@ -405,8 +417,15 @@ changeRouteTo maybeRoute model =
             Page.Article.init slug
                 |> updateWith model Article GotArticleMsg
 
-        Just (Route.Profile options) ->
-            Page.Profile.init options
+        Just (Route.Profile { favorites, username }) ->
+            Page.Profile.init
+                (if favorites then
+                    Feed.Favorited username
+
+                 else
+                    Feed.OwnArticles username
+                )
+                model.user
                 |> updateWith model Profile GotProfileMsg
 
 

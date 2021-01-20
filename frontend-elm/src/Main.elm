@@ -197,7 +197,7 @@ update msg model =
                 |> updateWith model Settings GotSettingsMsg
 
         ( GotEditorMsg subMsg, Editor subModel ) ->
-            Page.Editor.update subMsg subModel
+            Page.Editor.update subMsg subModel model.navKey model.user
                 |> updateWith model Editor GotEditorMsg
 
         ( GotArticleMsg subMsg, Article subModel ) ->

@@ -1,13 +1,17 @@
-module Api exposing (favoriteArticle, fetchFeed, fetchUser, listTags, login, register, unfavoriteArticle)
+module Api exposing (createArticle, favoriteArticle, fetchArticle, fetchFeed, fetchUser, listTags, login, register, unfavoriteArticle, updateArticle)
 
 import Article exposing (Article)
-import Article.Slug
+import Article.Slug exposing (Slug)
 import Article.Tag exposing (Tag)
 import Feed exposing (Feed)
 import Http
 import Json.Decode
 import Json.Encode
 import User exposing (User)
+
+
+
+-- INTERNALS
 
 
 baseUrl : String
@@ -63,6 +67,10 @@ optionallySignedRequest { method, userToken, url, body, expect, timeout, tracker
         , timeout = timeout
         , tracker = tracker
         }
+
+
+
+-- ARTICLES
 
 
 fetchFeed : Feed -> Maybe User -> (Result Http.Error (List Article) -> msg) -> Cmd msg
@@ -128,6 +136,75 @@ unfavoriteArticle article user toMsg =
         }
 
 
+fetchArticle : Slug -> (Result Http.Error Article -> msg) -> Cmd msg
+fetchArticle slug toMsg =
+    Http.get
+        { url = baseUrl ++ "/articles" ++ Article.Slug.toString slug
+        , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
+        }
+
+
+createArticle :
+    { title : String, description : String, body : String, tagList : List Tag }
+    -> User
+    -> (Result Http.Error Article -> msg)
+    -> Cmd msg
+createArticle { title, description, body, tagList } user toMsg =
+    signedRequest
+        { method = "POST"
+        , userToken = user.token
+        , url = baseUrl ++ "/articles"
+        , body =
+            Http.jsonBody <|
+                Json.Encode.object
+                    [ ( "article"
+                      , Json.Encode.object
+                            [ ( "title", Json.Encode.string title )
+                            , ( "description", Json.Encode.string description )
+                            , ( "body", Json.Encode.string body )
+                            , ( "tagList", Json.Encode.list Article.Tag.encoder tagList )
+                            ]
+                      )
+                    ]
+        , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+updateArticle :
+    { title : String, description : String, body : String, tagList : List Tag }
+    -> Article.Slug.Slug
+    -> User
+    -> (Result Http.Error Article -> msg)
+    -> Cmd msg
+updateArticle { title, description, body, tagList } slug user toMsg =
+    signedRequest
+        { method = "PUT"
+        , userToken = user.token
+        , url = baseUrl ++ "/articles/" ++ Article.Slug.toString slug
+        , body =
+            Http.jsonBody <|
+                Json.Encode.object
+                    [ ( "article"
+                      , Json.Encode.object
+                            [ ( "title", Json.Encode.string title )
+                            , ( "description", Json.Encode.string description )
+                            , ( "body", Json.Encode.string body )
+                            , ( "tagList", Json.Encode.list Article.Tag.encoder tagList )
+                            ]
+                      )
+                    ]
+        , expect = Http.expectJson toMsg (Json.Decode.field "article" Article.decoder)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+-- TAGS
+
+
 listTags : (Result Http.Error (List Tag) -> msg) -> Cmd msg
 listTags toMsg =
     Http.get
@@ -136,6 +213,10 @@ listTags toMsg =
             Http.expectJson toMsg
                 (Json.Decode.field "tags" (Json.Decode.list Article.Tag.decoder))
         }
+
+
+
+-- AUTHENTICATION
 
 
 login : { email : String, password : String } -> (Result Http.Error User -> msg) -> Cmd msg

@@ -1,6 +1,7 @@
-module Article.Tag exposing (Tag, decoder, fromString, toString)
+module Article.Tag exposing (Tag, decoder, encoder, fromString, toString)
 
 import Json.Decode exposing (Decoder)
+import Json.Encode
 
 
 type Tag
@@ -20,3 +21,8 @@ toString (Tag tag) =
 decoder : Decoder Tag
 decoder =
     Json.Decode.map Tag Json.Decode.string
+
+
+encoder : Tag -> Json.Encode.Value
+encoder (Tag tag) =
+    Json.Encode.string tag

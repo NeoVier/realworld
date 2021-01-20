@@ -95,7 +95,6 @@ update msg model navKey =
 
 
 -- VIEW
--- TODO
 
 
 view : Model -> { title : String, body : List (Element Msg) }

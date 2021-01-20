@@ -1,6 +1,7 @@
 module Form exposing
     ( defaultAttributes
     , emailValidation
+    , generalValidation
     , passwordValidation
     , submitButton
     , usernameValidation
@@ -81,6 +82,16 @@ passwordValidation password =
         { fieldName = "password"
         , fieldValue = password
         , minLength = 8
+        , canBeEmpty = False
+        }
+
+
+generalValidation : { value : String, fieldName : String } -> List String
+generalValidation { value, fieldName } =
+    fieldValidation
+        { fieldName = fieldName
+        , fieldValue = value
+        , minLength = 0
         , canBeEmpty = False
         }
 

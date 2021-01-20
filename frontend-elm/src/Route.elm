@@ -1,4 +1,4 @@
-module Route exposing (Route(..), fromUrl, linkToRoute, replaceUrl)
+module Route exposing (Route(..), fromUrl, linkToRoute, previousPage, replaceUrl)
 
 import Article.Slug exposing (Slug(..))
 import Browser.Navigation as Nav
@@ -65,6 +65,11 @@ linkToRoute attrs { route, label } =
 replaceUrl : Nav.Key -> Route -> Cmd msg
 replaceUrl key route =
     Nav.replaceUrl key (toString route)
+
+
+previousPage : Nav.Key -> Cmd msg
+previousPage navKey =
+    Nav.back navKey 1
 
 
 

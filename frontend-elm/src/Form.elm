@@ -43,7 +43,12 @@ fieldValidation { fieldName, fieldValue, minLength, canBeEmpty } =
                 []
 
         lengthValidation =
-            if not (String.isEmpty fieldValue) && String.length fieldValue < minLength then
+            if
+                not (String.isEmpty fieldValue)
+                    && not canBeEmpty
+                    && String.length fieldValue
+                    < minLength
+            then
                 [ fieldName
                     ++ " must be at least "
                     ++ String.fromInt minLength
@@ -56,43 +61,43 @@ fieldValidation { fieldName, fieldValue, minLength, canBeEmpty } =
     emptyValidation ++ lengthValidation
 
 
-usernameValidation : String -> List String
-usernameValidation username =
+usernameValidation : String -> Bool -> List String
+usernameValidation username optional =
     fieldValidation
         { fieldName = "username"
         , fieldValue = username
         , minLength = 3
-        , canBeEmpty = False
+        , canBeEmpty = optional
         }
 
 
-emailValidation : String -> List String
-emailValidation email =
+emailValidation : String -> Bool -> List String
+emailValidation email optional =
     fieldValidation
         { fieldName = "email"
         , fieldValue = email
         , minLength = 4
-        , canBeEmpty = False
+        , canBeEmpty = optional
         }
 
 
-passwordValidation : String -> List String
-passwordValidation password =
+passwordValidation : String -> Bool -> List String
+passwordValidation password optional =
     fieldValidation
         { fieldName = "password"
         , fieldValue = password
         , minLength = 8
-        , canBeEmpty = False
+        , canBeEmpty = optional
         }
 
 
-generalValidation : { value : String, fieldName : String } -> List String
-generalValidation { value, fieldName } =
+generalValidation : { value : String, fieldName : String, optional : Bool } -> List String
+generalValidation { value, fieldName, optional } =
     fieldValidation
         { fieldName = fieldName
         , fieldValue = value
         , minLength = 0
-        , canBeEmpty = False
+        , canBeEmpty = optional
         }
 
 

@@ -1,4 +1,4 @@
-module Api exposing (createArticle, favoriteArticle, fetchArticle, fetchFeed, fetchUser, listTags, login, register, unfavoriteArticle, updateArticle)
+module Api exposing (createArticle, favoriteArticle, fetchArticle, fetchFeed, fetchUser, listTags, login, register, unfavoriteArticle, updateArticle, updateUser)
 
 import Article exposing (Article)
 import Article.Slug exposing (Slug)
@@ -8,6 +8,7 @@ import Http
 import Json.Decode
 import Json.Encode
 import User exposing (User)
+import User.Username
 
 
 
@@ -266,6 +267,55 @@ fetchUser token toMsg =
         , userToken = token
         , url = baseUrl ++ "/user"
         , body = Http.emptyBody
+        , expect = Http.expectJson toMsg (Json.Decode.field "user" User.decoder)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+updateUser :
+    String
+    ->
+        { email : Maybe String
+        , username : Maybe User.Username.Username
+        , password : Maybe String
+        , image : Maybe String
+        , bio : Maybe String
+        }
+    -> (Result Http.Error User -> msg)
+    -> Cmd msg
+updateUser token { email, username, password, image, bio } toMsg =
+    let
+        encodeMaybe maybeValue =
+            case maybeValue of
+                Nothing ->
+                    Json.Encode.null
+
+                Just value ->
+                    Json.Encode.string value
+    in
+    signedRequest
+        { method = "PUT"
+        , userToken = token
+        , url = baseUrl ++ "/user"
+        , body =
+            Http.jsonBody <|
+                Json.Encode.object
+                    [ ( "user"
+                      , Json.Encode.object
+                            (List.filter (\( _, y ) -> y /= Json.Encode.null)
+                                [ ( "email", encodeMaybe email )
+                                , ( "username"
+                                  , encodeMaybe
+                                        (Maybe.map User.Username.toString username)
+                                  )
+                                , ( "password", encodeMaybe password )
+                                , ( "image", encodeMaybe image )
+                                , ( "bio", encodeMaybe bio )
+                                ]
+                            )
+                      )
+                    ]
         , expect = Http.expectJson toMsg (Json.Decode.field "user" User.decoder)
         , timeout = Nothing
         , tracker = Nothing

@@ -71,9 +71,9 @@ update msg model navKey =
         ClickedSubmit ->
             let
                 errors =
-                    Form.usernameValidation model.username
-                        ++ Form.emailValidation model.email
-                        ++ Form.passwordValidation model.password
+                    Form.usernameValidation model.username False
+                        ++ Form.emailValidation model.email False
+                        ++ Form.passwordValidation model.password False
             in
             if List.isEmpty errors then
                 ( { model | submitting = True, errors = [] }
@@ -97,7 +97,7 @@ update msg model navKey =
             )
 
         SendToSharedModel _ ->
-            ( model, Route.replaceUrl navKey Route.Home )
+            ( model, Route.previousPage navKey )
 
 
 

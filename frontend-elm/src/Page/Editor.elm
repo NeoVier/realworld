@@ -186,13 +186,25 @@ validateArticle : EditableArticleFields -> List String
 validateArticle article =
     let
         titleErrors =
-            Form.generalValidation { value = article.title, fieldName = "title" }
+            Form.generalValidation
+                { value = article.title
+                , fieldName = "title"
+                , optional = False
+                }
 
         descriptionErrors =
-            Form.generalValidation { value = article.description, fieldName = "description" }
+            Form.generalValidation
+                { value = article.description
+                , fieldName = "description"
+                , optional = False
+                }
 
         bodyErrors =
-            Form.generalValidation { value = article.body, fieldName = "body" }
+            Form.generalValidation
+                { value = article.body
+                , fieldName = "body"
+                , optional = False
+                }
     in
     titleErrors ++ descriptionErrors ++ bodyErrors
 

@@ -192,8 +192,15 @@ update msg model =
             Page.Register.update subMsg subModel model.navKey
                 |> updateWith model Register GotRegisterMsg
 
+        ( GotSettingsMsg ((Page.Settings.SendToSharedModel user) as subMsg), Settings subModel ) ->
+            Page.Settings.update subMsg subModel model.navKey model.user
+                |> updateWithCmd { model | user = Just user }
+                    (sendUser <| User.encoder user)
+                    Settings
+                    GotSettingsMsg
+
         ( GotSettingsMsg subMsg, Settings subModel ) ->
-            Page.Settings.update subMsg subModel
+            Page.Settings.update subMsg subModel model.navKey model.user
                 |> updateWith model Settings GotSettingsMsg
 
         ( GotEditorMsg subMsg, Editor subModel ) ->
@@ -382,8 +389,13 @@ changeRouteTo maybeRoute model =
                 |> updateWith model Register GotRegisterMsg
 
         Just Route.Settings ->
-            Page.Settings.init
-                |> updateWith model Settings GotSettingsMsg
+            case model.user of
+                Nothing ->
+                    Page.Login.init |> updateWith model Login GotLoginMsg
+
+                Just user ->
+                    Page.Settings.init user
+                        |> updateWith model Settings GotSettingsMsg
 
         Just (Route.Editor maybeSlug) ->
             Page.Editor.init maybeSlug

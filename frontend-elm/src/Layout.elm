@@ -33,6 +33,7 @@ view onLogOut activeRoute activeUser document =
                 , Element.height Element.fill
                 , Element.spacing 20
                 , Element.Region.mainContent
+                , Element.paddingEach { bottom = 50, left = 0, right = 0, top = 0 }
                 ]
                 document.body
             , footer

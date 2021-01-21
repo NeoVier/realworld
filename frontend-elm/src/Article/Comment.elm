@@ -8,7 +8,8 @@ import User.Profile exposing (Profile)
 
 
 type alias Comment =
-    { createdAt : Time.Posix
+    { id : Int
+    , createdAt : Time.Posix
     , updatedAt : Time.Posix
     , body : String
     , author : Profile
@@ -18,6 +19,7 @@ type alias Comment =
 decoder : Decoder Comment
 decoder =
     Json.Decode.succeed Comment
+        |> JDP.required "id" Json.Decode.int
         |> JDP.required "createdAt" Iso8601.decoder
         |> JDP.required "updatedAt" Iso8601.decoder
         |> JDP.required "body" Json.Decode.string

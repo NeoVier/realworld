@@ -1,4 +1,4 @@
-module Api exposing (createArticle, favoriteArticle, fetchArticle, fetchComments, fetchFeed, fetchProfile, fetchProfileFeed, fetchUser, followUser, listTags, login, register, unfavoriteArticle, unfollowUser, updateArticle, updateUser)
+module Api exposing (createArticle, deleteArticle, deleteComment, favoriteArticle, fetchArticle, fetchComments, fetchFeed, fetchProfile, fetchProfileFeed, fetchUser, followUser, listTags, login, postComment, register, unfavoriteArticle, unfollowUser, updateArticle, updateUser)
 
 import Article exposing (Article)
 import Article.Comment exposing (Comment)
@@ -215,6 +215,17 @@ updateArticle { title, description, body, tagList } slug user toMsg =
         }
 
 
+deleteArticle : Slug -> User -> (Result Http.Error () -> msg) -> Cmd msg
+deleteArticle slug user toMsg =
+    signedRequest
+        { method = "DELETE"
+        , userToken = user.token
+        , url = baseUrl ++ "/articles/" ++ Article.Slug.toString slug
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever toMsg
+        }
+
+
 
 -- TAGS
 
@@ -397,4 +408,37 @@ fetchComments slug maybeUser toMsg =
                 (Json.Decode.field "comments"
                     (Json.Decode.list Article.Comment.decoder)
                 )
+        }
+
+
+postComment :
+    Slug
+    -> String
+    -> User
+    -> (Result Http.Error Comment -> msg)
+    -> Cmd msg
+postComment slug body user toMsg =
+    signedRequest
+        { method = "POST"
+        , userToken = user.token
+        , url = baseUrl ++ "/articles/" ++ Article.Slug.toString slug ++ "/comments"
+        , body =
+            Http.jsonBody <|
+                Json.Encode.object
+                    [ ( "comment"
+                      , Json.Encode.object [ ( "body", Json.Encode.string body ) ]
+                      )
+                    ]
+        , expect = Http.expectJson toMsg (Json.Decode.field "comment" Article.Comment.decoder)
+        }
+
+
+deleteComment : Slug -> Comment -> User -> (Result Http.Error () -> msg) -> Cmd msg
+deleteComment slug comment user toMsg =
+    signedRequest
+        { method = "DELETE"
+        , userToken = user.token
+        , url = baseUrl ++ "/articles/" ++ Article.Slug.toString slug ++ "/comments/" ++ String.fromInt comment.id
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever toMsg
         }

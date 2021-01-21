@@ -5,6 +5,7 @@ module Palette exposing
     , minPaddingX
     , regularFont
     , rem
+    , serifFont
     , underlineOnHover
     )
 
@@ -53,4 +54,12 @@ regularFont =
     Element.Font.family
         [ Element.Font.typeface "Source Sans Pro"
         , Element.Font.sansSerif
+        ]
+
+
+serifFont : Element.Attribute msg
+serifFont =
+    Element.Font.family
+        [ Element.Font.typeface "Source Serif Pro"
+        , Element.Font.serif
         ]

@@ -220,7 +220,7 @@ update msg model =
                 |> updateWith model Editor GotEditorMsg
 
         ( GotArticleMsg subMsg, Article subModel ) ->
-            Page.Article.update subMsg subModel model.user
+            Page.Article.update subMsg subModel model.navKey model.user
                 |> updateWith model Article GotArticleMsg
 
         ( GotProfileMsg subMsg, Profile subModel ) ->

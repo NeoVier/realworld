@@ -10,7 +10,6 @@ import Element.Background
 import Element.Border
 import Element.Font
 import Element.Input
-import Form
 import Html.Attributes
 import Http
 import Ionicon

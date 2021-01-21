@@ -70,14 +70,14 @@ optionallySignedRequest { method, userToken, url, body, expect } =
 -- ARTICLES
 
 
-fetchFeed : Feed -> Maybe User -> (Result Http.Error (List Article) -> msg) -> Cmd msg
-fetchFeed feed maybeUser toMsg =
+fetchFeed : Feed -> Int -> Maybe User -> (Result Http.Error (List Article) -> msg) -> Cmd msg
+fetchFeed feed offset maybeUser toMsg =
     case feed of
         Feed.Global ->
             optionallySignedRequest
                 { method = "GET"
                 , userToken = Maybe.map .token maybeUser
-                , url = baseUrl ++ "/articles"
+                , url = baseUrl ++ "/articles?offset=" ++ String.fromInt offset
                 , body = Http.emptyBody
                 , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
                 }
@@ -86,7 +86,7 @@ fetchFeed feed maybeUser toMsg =
             signedRequest
                 { method = "GET"
                 , userToken = user.token
-                , url = baseUrl ++ "/articles/feed"
+                , url = baseUrl ++ "/articles/feed?offset=" ++ String.fromInt offset
                 , body = Http.emptyBody
                 , expect = Http.expectJson toMsg (Json.Decode.field "articles" (Json.Decode.list Article.decoder))
                 }
@@ -95,7 +95,12 @@ fetchFeed feed maybeUser toMsg =
             optionallySignedRequest
                 { method = "GET"
                 , userToken = Maybe.map .token maybeUser
-                , url = baseUrl ++ "/articles?tag=" ++ Article.Tag.toString tag
+                , url =
+                    baseUrl
+                        ++ "/articles?tag="
+                        ++ Article.Tag.toString tag
+                        ++ "?offset="
+                        ++ String.fromInt offset
                 , body = Http.emptyBody
                 , expect =
                     Http.expectJson toMsg
@@ -105,18 +110,25 @@ fetchFeed feed maybeUser toMsg =
 
 fetchProfileFeed :
     Feed.ProfileFeed
+    -> Int
     -> Maybe User
     -> (Result Http.Error (List Article) -> msg)
     -> Cmd msg
-fetchProfileFeed feed maybeUser toMsg =
+fetchProfileFeed feed offset maybeUser toMsg =
     let
         endpoint =
             case feed of
                 Feed.OwnArticles owner ->
-                    "/articles?author=" ++ User.Username.toString owner
+                    "/articles?author="
+                        ++ User.Username.toString owner
+                        ++ "?offset="
+                        ++ String.fromInt offset
 
                 Feed.Favorited owner ->
-                    "/articles?favorited=" ++ User.Username.toString owner
+                    "/articles?favorited="
+                        ++ User.Username.toString owner
+                        ++ "?offset="
+                        ++ String.fromInt offset
     in
     optionallySignedRequest
         { method = "GET"

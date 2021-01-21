@@ -43,7 +43,7 @@ init maybeUser =
       , feedType = Feed.Global
       }
     , Cmd.batch
-        [ Api.fetchFeed Feed.Global maybeUser GotArticles
+        [ Api.fetchFeed Feed.Global 0 maybeUser GotArticles
         , Api.listTags GotTags
         ]
     )
@@ -59,6 +59,7 @@ type Msg
     | ClickedFavorite Article
     | ChangedFeed Feed
     | ClickedTag Tag
+    | ClickedLoadMore
     | NoOp
 
 
@@ -70,7 +71,16 @@ update : Msg -> Model -> Maybe User -> Nav.Key -> ( Model, Cmd Msg )
 update msg model maybeUser navKey =
     case msg of
         GotArticles (Ok articles) ->
-            ( { model | feed = WithData articles }, Cmd.none )
+            let
+                previousArticles =
+                    case model.feed of
+                        WithData data ->
+                            data
+
+                        _ ->
+                            []
+            in
+            ( { model | feed = WithData (previousArticles ++ articles) }, Cmd.none )
 
         GotArticles (Err _) ->
             ( { model | feed = WithError "Something went wrong" }, Cmd.none )
@@ -124,13 +134,25 @@ update msg model maybeUser navKey =
 
         ChangedFeed newFeed ->
             ( { model | feedType = newFeed, feed = Loading }
-            , Api.fetchFeed newFeed maybeUser GotArticles
+            , Api.fetchFeed newFeed 0 maybeUser GotArticles
             )
 
         ClickedTag tag ->
             ( { model | feedType = Feed.Tag tag, feed = Loading }
-            , Api.fetchFeed (Feed.Tag tag) maybeUser GotArticles
+            , Api.fetchFeed (Feed.Tag tag) 0 maybeUser GotArticles
             )
+
+        ClickedLoadMore ->
+            let
+                offset =
+                    case model.feed of
+                        WithData articles ->
+                            List.length articles + 1
+
+                        _ ->
+                            0
+            in
+            ( model, Api.fetchFeed model.feedType offset maybeUser GotArticles )
 
         NoOp ->
             ( model, Cmd.none )
@@ -174,7 +196,10 @@ view model device timeZone maybeUser =
                         Element.text "Loading"
 
                     WithData articles ->
-                        Article.viewArticles timeZone (Just ClickedFavorite) articles
+                        Element.column [ Element.width Element.fill, Element.spacing 30 ]
+                            [ Article.viewArticles timeZone (Just ClickedFavorite) articles
+                            , Feed.loadMoreButton [ Element.centerX ] (Just ClickedLoadMore)
+                            ]
 
                     WithError err ->
                         Element.text err

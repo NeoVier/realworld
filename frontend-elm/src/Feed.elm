@@ -2,12 +2,19 @@ module Feed exposing
     ( Feed(..)
     , ProfileFeed(..)
     , fromString
+    , loadMoreButton
     , profileFeedFromString
     , profileFeedToString
     , toString
     )
 
 import Article.Tag
+import Element exposing (Element)
+import Element.Background
+import Element.Border
+import Element.Font
+import Element.Input
+import Palette
 import User exposing (User)
 import User.Username exposing (Username)
 
@@ -84,3 +91,23 @@ profileFeedFromString string profileOwner =
 
         _ ->
             OwnArticles profileOwner
+
+
+
+-- LOAD MORE
+
+
+loadMoreButton : List (Element.Attribute msg) -> Maybe msg -> Element msg
+loadMoreButton attributes onPress =
+    Element.Input.button
+        ([ Element.paddingXY (Palette.rem 1) (Palette.rem 0.5)
+         , Element.Background.color Palette.color
+         , Element.Font.color <| Element.rgb 1 1 1
+         , Element.Font.size <| Palette.rem 1.25
+         , Element.Border.rounded (Palette.rem 0.25)
+         ]
+            ++ attributes
+        )
+        { onPress = onPress
+        , label = Element.text "Load more posts"
+        }

@@ -64,6 +64,7 @@ type Msg
     | FollowedUser (Result Http.Error Profile)
     | ChangedFeed ProfileFeed
     | ClickedFavorite Article
+    | ClickedLoadMore
     | NoOp
 
 
@@ -76,14 +77,23 @@ update msg model maybeUser =
     case ( msg, model ) of
         ( GotProfile (Ok profile), Loading feed ) ->
             ( WithData { profile = profile, feed = feed, articles = LoadingArticles }
-            , Api.fetchProfileFeed feed maybeUser GotArticles
+            , Api.fetchProfileFeed feed 0 maybeUser GotArticles
             )
 
         ( GotProfile (Err _), _ ) ->
             ( WithError "something went wrong.", Cmd.none )
 
         ( GotArticles (Ok articles), WithData wd ) ->
-            ( WithData { wd | articles = WithArticles articles }
+            let
+                previousArticles =
+                    case wd.articles of
+                        WithArticles data ->
+                            data
+
+                        _ ->
+                            []
+            in
+            ( WithData { wd | articles = WithArticles (previousArticles ++ articles) }
             , Cmd.none
             )
 
@@ -109,7 +119,7 @@ update msg model maybeUser =
 
         ( ChangedFeed newFeed, WithData wd ) ->
             ( WithData { wd | feed = newFeed }
-            , Api.fetchProfileFeed newFeed maybeUser GotArticles
+            , Api.fetchProfileFeed newFeed 0 maybeUser GotArticles
             )
 
         ( ClickedFavorite favoritedArticle, WithData wd ) ->
@@ -149,6 +159,23 @@ update msg model maybeUser =
                 _ ->
                     ( model, Cmd.none )
 
+        ( ClickedLoadMore, WithData wd ) ->
+            let
+                articlesLength =
+                    case wd.articles of
+                        WithArticles data ->
+                            List.length data
+
+                        _ ->
+                            0
+            in
+            ( model
+            , Api.fetchProfileFeed wd.feed
+                (articlesLength + 1)
+                maybeUser
+                GotArticles
+            )
+
         ( NoOp, _ ) ->
             ( model, Cmd.none )
 
@@ -169,6 +196,9 @@ update msg model maybeUser =
             ( model, Cmd.none )
 
         ( ClickedFavorite _, _ ) ->
+            ( model, Cmd.none )
+
+        ( ClickedLoadMore, _ ) ->
             ( model, Cmd.none )
 
 
@@ -208,7 +238,13 @@ view model timeZone maybeUser =
                             Element.text "Loading"
 
                         WithArticles articles ->
-                            Article.viewArticles timeZone (Just ClickedFavorite) articles
+                            Element.column
+                                [ Element.width Element.fill
+                                , Element.spacing 30
+                                ]
+                                [ Article.viewArticles timeZone (Just ClickedFavorite) articles
+                                , Feed.loadMoreButton [ Element.centerX ] (Just ClickedLoadMore)
+                                ]
 
                         WithArticlesError err ->
                             Element.text err
